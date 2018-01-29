@@ -4,7 +4,7 @@ PICSAR_HOME ?= ../picsar
 DEBUG	= FALSE
 DEBUG	= TRUE
 
-DIM	= 2
+DIM	= 3
 
 COMP    = gnu
 

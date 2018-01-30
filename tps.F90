@@ -54,7 +54,7 @@ contains
     integer :: nfftx, nffty, nfftz, i,j
 
     allocate(my_cc_mat(ns_max))
-    allocate(my_cc_mat(1)%block_matrix2d(11,11))
+    allocate(my_cc_mat(1)%block_matrix2d(nvar,nvar))
     my_cc_mat(1)%nblocks = nvar
     ! nfftx, nffty, nfftz = ...
     do j = 1, nvar

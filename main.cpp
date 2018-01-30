@@ -41,6 +41,11 @@ void toy ()
         tps_mpi_init(fcomm);
     }
 
+    // initialize FFTW plans
+    {
+
+    }
+
     // free MPI
     {
         tps_mpi_finalize();

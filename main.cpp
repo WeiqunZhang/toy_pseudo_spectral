@@ -9,7 +9,7 @@ using namespace amrex;
 
 void toy ()
 {
-    Box domain(IntVect(0,0,0), IntVect(63,63,63));
+    Box domain(IntVect(0,0,0), IntVect(31,31,31));
     domain.grow(16);
     BoxArray ba(domain);
     ba.maxSize(32);
@@ -24,16 +24,16 @@ void toy ()
     const IntVect jx_nodal_flag(0,1,1);
     const IntVect jy_nodal_flag(1,0,1);
     const IntVect jz_nodal_flag(1,1,0);
-    
-    MultiFab Ex(amrex::convert(ba,Ex_nodal_flag),dm,1,0);
-    MultiFab Ey(amrex::convert(ba,Ey_nodal_flag),dm,1,0);
-    MultiFab Ez(amrex::convert(ba,Ez_nodal_flag),dm,1,0);
-    MultiFab Bx(amrex::convert(ba,Bx_nodal_flag),dm,1,0);
-    MultiFab By(amrex::convert(ba,By_nodal_flag),dm,1,0);
-    MultiFab Bz(amrex::convert(ba,Bz_nodal_flag),dm,1,0);
-    MultiFab jx(amrex::convert(ba,jx_nodal_flag),dm,1,0);
-    MultiFab jy(amrex::convert(ba,jy_nodal_flag),dm,1,0);
-    MultiFab jz(amrex::convert(ba,jz_nodal_flag),dm,1,0);
+
+    MultiFab Ex(ba,dm,1,0);
+    MultiFab Ey(ba,dm,1,0);
+    MultiFab Ez(ba,dm,1,0);
+    MultiFab Bx(ba,dm,1,0);
+    MultiFab By(ba,dm,1,0);
+    MultiFab Bz(ba,dm,1,0);
+    MultiFab jx(ba,dm,1,0);
+    MultiFab jy(ba,dm,1,0);
+    MultiFab jz(ba,dm,1,0);
 
     // MPI
     {
@@ -43,7 +43,7 @@ void toy ()
 
     // initialize FFTW plans
     {
-
+      tps_fft_init(64,64,64);
     }
 
     // free MPI
@@ -61,4 +61,3 @@ int main(int argc, char* argv[])
 
     amrex::Finalize();
 }
-

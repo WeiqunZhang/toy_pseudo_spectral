@@ -7,6 +7,7 @@ extern "C" {
 
     void tps_mpi_init (int comm);
     void tps_mpi_finalize ();
+  void tps_fft_init( int nx, int ny, int nz );
 
 #ifdef __cplusplus
 }

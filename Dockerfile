@@ -24,9 +24,20 @@ RUN git clone https://github.com/AMReX-Codes/amrex.git \
     && cd amrex \
     && git checkout development
 RUN git clone https://bitbucket.org/berkeleylab/picsar.git
-RUN git clone https://github.com/WeiqunZhang/toy_pseudo_spectral.git
+
+# Copy the toy pseudo-spectral
+RUN mkdir tps
+COPY GNUmakefile tps/
+COPY Make.package tps/
+COPY TPS_F.H tps/
+COPY main.cpp tps/
+COPY tps.F90 tps/
 
 # Build the software
-RUN cd toy_pseudo_spectral \
+RUN cd tps \
     && export FFTW_HOME=/usr/ \
     && make
+
+# Run the code for testing
+RUN cd tps \
+    && mpirun -np 4 ./main3d.gnu.DEBUG.MPI.OMP.ex

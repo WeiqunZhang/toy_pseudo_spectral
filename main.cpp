@@ -25,29 +25,18 @@ void toy ()
     const IntVect jy_nodal_flag(1,0,1);
     const IntVect jz_nodal_flag(1,1,0);
 
-    MultiFab Ex(ba,dm,1,0);
-    MultiFab Ey(ba,dm,1,0);
-    MultiFab Ez(ba,dm,1,0);
-    MultiFab Bx(ba,dm,1,0);
-    MultiFab By(ba,dm,1,0);
-    MultiFab Bz(ba,dm,1,0);
-    MultiFab jx(ba,dm,1,0);
-    MultiFab jy(ba,dm,1,0);
-    MultiFab jz(ba,dm,1,0);
-    MultiFab rho(ba,dm,1,0);
-    MultiFab rhoold(ba,dm,1,0);
-    Ex.setVal(0.);
-    Ey.setVal(0.);
-    Ez.setVal(0.);
-    Bx.setVal(0.);
-    By.setVal(0.);
-    Bz.setVal(0.);
-    jx.setVal(0.);
-    jy.setVal(0.);
-    jz.setVal(0.);
-    rho.setVal(0.);
-    rhoold.setVal(0.);
-    
+    MultiFab Ex(ba,dm,1,0);  Ex.setVal(0.);
+    MultiFab Ey(ba,dm,1,0);  Ey.setVal(0.);
+    MultiFab Ez(ba,dm,1,0);  Ez.setVal(0.);
+    MultiFab Bx(ba,dm,1,0);  Bx.setVal(0.);
+    MultiFab By(ba,dm,1,0);  By.setVal(0.);
+    MultiFab Bz(ba,dm,1,0);  Bz.setVal(0.);
+    MultiFab jx(ba,dm,1,0);  jx.setVal(0.);
+    MultiFab jy(ba,dm,1,0);  jy.setVal(0.);
+    MultiFab jz(ba,dm,1,0);  jz.setVal(0.);
+    MultiFab rho(ba,dm,1,0);  rho.setVal(0.);
+    MultiFab rhoold(ba,dm,1,0);  rhoold.setVal(0.);
+
     // MPI
     {
         int fcomm = MPI_Comm_c2f(ParallelDescriptor::Communicator());
@@ -56,15 +45,14 @@ void toy ()
 
     // initialize FFTW plans
     {
-      // For now, make sure that there is only one grid per MPI rank
-      int count_grids = 0;
-
-      // Loop through the grids 
+      // Loop through the grids
       for ( MFIter mfi(Ex); mfi.isValid(); ++mfi ) {
-	tps_fft_init( 64, 64, 64, 3, Ex[mfi].dataPtr() );
-	  count_grids ++;
-	  std::cout << count_grids << std::endl;
-	}
+	         tps_fft_init( 64, 64, 64, 3,
+                Ex[mfi].dataPtr(), Ey[mfi].dataPtr(), Ez[mfi].dataPtr(),
+                Bx[mfi].dataPtr(), By[mfi].dataPtr(), Bz[mfi].dataPtr(),
+                jx[mfi].dataPtr(), jy[mfi].dataPtr(), jz[mfi].dataPtr(),
+                rho[mfi].dataPtr(), rhoold[mfi].dataPtr() );
+	          }
     }
 
     // free MPI

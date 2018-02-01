@@ -47,7 +47,7 @@ contains
     IMPLICIT NONE
 
     integer, value, intent(in) :: nx, ny, nz, dim
-    REAL(num), INTENT(INOUT), TARGET, DIMENSION(:,:,:) :: &
+    REAL(num), INTENT(INOUT), TARGET, DIMENSION(1:32,1:32,1:32) :: &
          ex, ey, ez, bx, by, bz, jx, jy, jz, rho, rhoold
 
     IF(rank==0) PRINT*, 'BEGIN INIT EXTERNAL'
@@ -70,16 +70,16 @@ contains
     nz_global = INT(nz,idp)
 
     ex_r => ex
-!    ey_r => ey
-!      ez_r => ez
-!      bx_r => bx
-!      by_r => by
-!      bz_r => bz
-!      jx_r => jx
-!      jy_r => jy
-!      jz_r => jz
-!      rho_r => rho
-!      rhoold_r => rhoold
+    ey_r => ey
+    ez_r => ez
+    bx_r => bx
+    by_r => by
+    bz_r => bz
+    jx_r => jx
+    jy_r => jy
+    jz_r => jz
+    rho_r => rho
+    rhoold_r => rhoold
 
 !      nkx=(2*nxguards+nx+1)/2+1! Real To Complex Transform
 !      nky=(2*nyguards+ny+1)

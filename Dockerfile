@@ -26,7 +26,7 @@ RUN git clone https://github.com/AMReX-Codes/amrex.git \
 RUN git clone https://bitbucket.org/berkeleylab/picsar.git
 
 # Copy the toy pseudo-spectral
-RUN mkdir tps
+RUN mkdir tps/
 COPY GNUmakefile tps/
 COPY Make.package tps/
 COPY TPS_F.H tps/
@@ -40,4 +40,4 @@ RUN cd tps \
 
 # Run the code for testing
 RUN cd tps \
-    && mpirun -np 4 ./main3d.gnu.DEBUG.MPI.OMP.ex
+    && mpirun -np 8 ./main3d.gnu.DEBUG.MPI.OMP.ex

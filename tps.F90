@@ -16,13 +16,29 @@ contains
     rank = lrank
   end subroutine tps_mpi_init
 
-  SUBROUTINE tps_fft_init( nx, ny, nz ) BIND(C,name='tps_fft_init')
-!    USE params
+
+  ! _________________________________________________________________________
+  !> @brief
+  !> Routine that links the AMREX fields to the PICSAR modules,
+  !> creates the FFT plans, and creates the blocks of coefficients
+  !
+  !> @params[in] nx, ny, nz - INTEGER - number of cells along each direction
+  !> in the FFT subgroup
+  !> @params[in] dim - INTEGER - dimensionality of the simulation
+  !> (2 for 2d, 3 for 3d)
+  !
+  ! __________________________________________________________________________
+
+  SUBROUTINE tps_fft_init( nx, ny, nz, dim, &
+       ex, ey, ez, bx, by, bz, jx, jy, jz, rho, rhoold ) &
+       BIND(C,name='tps_fft_init')
+
     USE shared_data, only: rank, fftw_with_mpi, p3dfft_flag, fftw_threads_ok, &
-                      nx_global, ny_global, nz_global
-!    USE constants
+                      nx_global, ny_global, nz_global, c_dim
+    USE constants, only: num
     USE picsar_precision, only: idp
-    USE fields, only: l_spectral
+    USE fields, only: l_spectral, ex_r, ey_r, ez_r, bx_r, by_r, bz_r, &
+        jx_r, jy_r, jz_r, rho_r, rhoold_r
 !    USE fastfft
 #if defined(FFTW)
     USE fourier_psaotd
@@ -30,11 +46,16 @@ contains
 #endif
     IMPLICIT NONE
 
-    integer, value, intent(in) :: nx, ny, nz
+    integer, value, intent(in) :: nx, ny, nz, dim
+    REAL(num), INTENT(INOUT), TARGET, DIMENSION(:,:,:) :: &
+         ex, ey, ez, bx, by, bz, jx, jy, jz, rho, rhoold
 
     IF(rank==0) PRINT*, 'BEGIN INIT EXTERNAL'
     l_spectral  = .TRUE.   ! Activate spectral Solver, using FFT
+
+    ! Initialize FFT plans
     fftw_with_mpi = .TRUE. ! Activate MPI FFTW
+    c_dim = INT(dim,idp)   ! Dimensionality of the simulation (2d/3d)
 !    fftw_hybrid = .FALSE.
 !    fftw_mpi_transpose = .FALSE.
 !    l_staggered = .TRUE.
@@ -48,19 +69,17 @@ contains
     ny_global = INT(ny,idp)
     nz_global = INT(nz,idp)
 
-    ! Allocation of arrays
-!      ex_r => field3
-!      ey_r => field2
-!      ez_r => field1
-!      bx_r => field6
-!      by_r => field5
-!      bz_r => field4
-
-!      jx_r => field9
-!      jy_r => field8
-!      jz_r => field7
-!      rho_r =>field10
-!      rhoold_r =>field11
+    ex_r => ex
+!    ey_r => ey
+!      ez_r => ez
+!      bx_r => bx
+!      by_r => by
+!      bz_r => bz
+!      jx_r => jx
+!      jy_r => jy
+!      jz_r => jz
+!      rho_r => rho
+!      rhoold_r => rhoold
 
 !      nkx=(2*nxguards+nx+1)/2+1! Real To Complex Transform
 !      nky=(2*nyguards+ny+1)

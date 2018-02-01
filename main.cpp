@@ -34,7 +34,20 @@ void toy ()
     MultiFab jx(ba,dm,1,0);
     MultiFab jy(ba,dm,1,0);
     MultiFab jz(ba,dm,1,0);
-
+    MultiFab rho(ba,dm,1,0);
+    MultiFab rhoold(ba,dm,1,0);
+    Ex.setVal(0.);
+    Ey.setVal(0.);
+    Ez.setVal(0.);
+    Bx.setVal(0.);
+    By.setVal(0.);
+    Bz.setVal(0.);
+    jx.setVal(0.);
+    jy.setVal(0.);
+    jz.setVal(0.);
+    rho.setVal(0.);
+    rhoold.setVal(0.);
+    
     // MPI
     {
         int fcomm = MPI_Comm_c2f(ParallelDescriptor::Communicator());
@@ -43,7 +56,15 @@ void toy ()
 
     // initialize FFTW plans
     {
-      tps_fft_init(64,64,64);
+      // For now, make sure that there is only one grid per MPI rank
+      int count_grids = 0;
+
+      // Loop through the grids 
+      for ( MFIter mfi(Ex); mfi.isValid(); ++mfi ) {
+	tps_fft_init( 64, 64, 64, 3, Ex[mfi].dataPtr() );
+	  count_grids ++;
+	  std::cout << count_grids << std::endl;
+	}
     }
 
     // free MPI

@@ -30,7 +30,7 @@ contains
 #endif
     IMPLICIT NONE
 
-    INTEGER :: nx, ny, nz
+    integer, value, intent(in) :: nx, ny, nz
 
     IF(rank==0) PRINT*, 'BEGIN INIT EXTERNAL'
     l_spectral  = .TRUE.   ! Activate spectral Solver, using FFT
@@ -79,7 +79,7 @@ contains
 !      IF(.NOT. ASSOCIATED(rhooldf)) ALLOCATE(rhooldf(nkx, nky, nkz))
 
 
-    CALL init_plans_blocks
+!    CALL init_plans_blocks
 
     IF(rank==0) PRINT*, 'END INIT EXTERNAL'
   END SUBROUTINE tps_fft_init

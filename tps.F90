@@ -54,12 +54,14 @@ contains
     l_spectral  = .TRUE.   ! Activate spectral Solver, using FFT
 
     ! Initialize FFT plans
-    fftw_with_mpi = .TRUE. ! Activate MPI FFTW
     c_dim = INT(dim,idp)   ! Dimensionality of the simulation (2d/3d)
-!    fftw_hybrid = .FALSE.
-!    fftw_mpi_transpose = .FALSE.
+    fftw_with_mpi = .TRUE. ! Activate MPI FFTW
+    fftw_hybrid = .TRUE.   ! FFT per MPI subgroup (instead of global)
+    fftw_mpi_transpose = .TRUE. ! Do not transpose the data 
+    fftw_threads_ok = .FALSE.   ! Do not use threads for FFTW 
+
 !    l_staggered = .TRUE.
-    fftw_threads_ok = .FALSE.
+
 !    CALL DFFTW_INIT_THREADS(iret)
 !    fftw_threads_ok = .TRUE.
     p3dfft_flag = .FALSE.

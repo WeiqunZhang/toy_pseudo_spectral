@@ -40,4 +40,4 @@ RUN cd tps \
 
 # Run the code for testing
 RUN cd tps \
-    && mpirun -np 8 ./main3d.gnu.DEBUG.MPI.OMP.ex
+    && mpirun -np 4 ./main3d.gnu.DEBUG.MPI.OMP.ex

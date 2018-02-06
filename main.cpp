@@ -9,7 +9,10 @@ using namespace amrex;
 
 void toy ()
 {
-    Box domain(IntVect(0,0,0), IntVect(31,31,31));
+    // Since FFTW can do only 1D domain decomposition,
+    // for the moment the box is chosen to be long in the x direction
+    // With the added guard cells, this will produce a 4 boxes of 32^3
+    Box domain(IntVect(0,0,0), IntVect(95,15,15));
     domain.grow(16);
     BoxArray ba(domain);
     ba.maxSize(32);
@@ -47,11 +50,13 @@ void toy ()
     {
       // Loop through the grids
       for ( MFIter mfi(Ex); mfi.isValid(); ++mfi ) {
-	         tps_fft_init( 64, 64, 64, 3,
-                Ex[mfi].dataPtr(), Ey[mfi].dataPtr(), Ez[mfi].dataPtr(),
-                Bx[mfi].dataPtr(), By[mfi].dataPtr(), Bz[mfi].dataPtr(),
-                jx[mfi].dataPtr(), jy[mfi].dataPtr(), jz[mfi].dataPtr(),
-                rho[mfi].dataPtr(), rhoold[mfi].dataPtr() );
+	tps_fft_init( BL_SPACEDIM,
+		      domain.loVect(), domain.hiVect(),
+		      Ex[mfi].loVect(), Ex[mfi].hiVect(),
+		      Ex[mfi].dataPtr(), Ey[mfi].dataPtr(), Ez[mfi].dataPtr(),
+		      Bx[mfi].dataPtr(), By[mfi].dataPtr(), Bz[mfi].dataPtr(),
+		      jx[mfi].dataPtr(), jy[mfi].dataPtr(), jz[mfi].dataPtr(),
+		      rho[mfi].dataPtr(), rhoold[mfi].dataPtr() );
 	          }
     }
 

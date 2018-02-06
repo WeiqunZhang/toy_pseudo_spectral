@@ -29,12 +29,14 @@ contains
   !
   ! __________________________________________________________________________
 
-  SUBROUTINE tps_fft_init( nx, ny, nz, dim, &
-       ex, ey, ez, bx, by, bz, jx, jy, jz, rho, rhoold ) &
+  SUBROUTINE tps_fft_init( dim, global_lo, global_hi, local_lo, local_hi, &
+           ex, ey, ez, bx, by, bz, jx, jy, jz, rho, rhoold ) &
        BIND(C,name='tps_fft_init')
 
+    
     USE shared_data, only: rank, fftw_with_mpi, p3dfft_flag, fftw_threads_ok, &
-                      nx_global, ny_global, nz_global, c_dim
+                      nx_global, ny_global, nz_global, c_dim, fftw_hybrid, &
+                      fftw_mpi_transpose
     USE constants, only: num
     USE picsar_precision, only: idp
     USE fields, only: l_spectral, ex_r, ey_r, ez_r, bx_r, by_r, bz_r, &
@@ -46,30 +48,32 @@ contains
 #endif
     IMPLICIT NONE
 
-    integer, value, intent(in) :: nx, ny, nz, dim
-    REAL(num), INTENT(INOUT), TARGET, DIMENSION(1:32,1:32,1:32) :: &
+    integer, intent(in) :: global_lo(BL_SPACEDIM), global_hi(BL_SPACEDIM)
+    integer, intent(in) :: local_lo(BL_SPACEDIM), local_hi(BL_SPACEDIM)
+    integer, value, intent(in) :: dim
+
+    REAL(num), INTENT(INOUT), TARGET, DIMENSION(local_lo(1):local_hi(1), &
+                                                local_lo(2):local_hi(2), &
+                                                local_lo(3):local_hi(3)) :: &
          ex, ey, ez, bx, by, bz, jx, jy, jz, rho, rhoold
 
-    IF(rank==0) PRINT*, 'BEGIN INIT EXTERNAL'
     l_spectral  = .TRUE.   ! Activate spectral Solver, using FFT
 
     ! Initialize FFT plans
     c_dim = INT(dim,idp)   ! Dimensionality of the simulation (2d/3d)
     fftw_with_mpi = .TRUE. ! Activate MPI FFTW
-    fftw_hybrid = .TRUE.   ! FFT per MPI subgroup (instead of global)
-    fftw_mpi_transpose = .TRUE. ! Do not transpose the data 
-    fftw_threads_ok = .FALSE.   ! Do not use threads for FFTW 
+    fftw_hybrid = .FALSE.   ! FFT per MPI subgroup (instead of global)
+    fftw_mpi_transpose = .FALSE. ! Do not transpose the data
+    fftw_threads_ok = .FALSE.   ! Do not use threads for FFTW
+    p3dfft_flag = .FALSE.
 
 !    l_staggered = .TRUE.
-
 !    CALL DFFTW_INIT_THREADS(iret)
 !    fftw_threads_ok = .TRUE.
-    p3dfft_flag = .FALSE.
-!    p3dfft_stride = .FALSE.
-!    c_dim = INT(cdim,idp)
-    nx_global = INT(nx,idp)
-    ny_global = INT(ny,idp)
-    nz_global = INT(nz,idp)
+    ! This is necessary for the initialization of the global FFT
+    nx_global = INT(global_hi(1)-global_lo(1),idp)
+    ny_global = INT(global_hi(2)-global_lo(2),idp)
+    nz_global = INT(global_hi(3)-global_lo(3),idp)
 
     ex_r => ex
     ey_r => ey
@@ -102,7 +106,6 @@ contains
 
 !    CALL init_plans_blocks
 
-    IF(rank==0) PRINT*, 'END INIT EXTERNAL'
   END SUBROUTINE tps_fft_init
 
 

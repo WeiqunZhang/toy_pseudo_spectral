@@ -4,14 +4,16 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-  
+
   void tps_mpi_init (int comm);
   void tps_mpi_finalize ();
-  void tps_fft_init( int nx, int ny, int nz, int dim, 
-  		     Real* ex, Real* ey, Real* ez,
-		     Real* bx, Real* by, Real* bz,
-  		     Real* jx, Real* jy, Real* jz,
-  		     Real* rho, Real* rhoold );
+  void tps_fft_init( int dim,
+    const int* global_lo, const int* global_hi,
+    const int* local_lo, const int* local_hi,
+    Real* ex, Real* ey, Real* ez,
+    Real* bx, Real* by, Real* bz,
+  	Real* jx, Real* jy, Real* jz,
+    Real* rho, Real* rhoold );
 
 #ifdef __cplusplus
 }

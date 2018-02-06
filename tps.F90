@@ -32,19 +32,21 @@ contains
   SUBROUTINE tps_fft_init( dim, global_lo, global_hi, local_lo, local_hi, &
            ex, ey, ez, bx, by, bz, jx, jy, jz, rho, rhoold ) &
        BIND(C,name='tps_fft_init')
-
     
-    USE shared_data, only: rank, fftw_with_mpi, p3dfft_flag, fftw_threads_ok, &
-                      nx_global, ny_global, nz_global, c_dim, fftw_hybrid, &
-                      fftw_mpi_transpose
+    USE shared_data, only: rank, c_dim, &
+         fftw_with_mpi, p3dfft_flag, fftw_threads_ok, fftw_hybrid, fftw_mpi_transpose, &
+         nx_global, ny_global, nz_global, & ! Size of global FFT
+         nx, ny, nz ! Size of local subdomains
     USE constants, only: num
     USE picsar_precision, only: idp
-    USE fields, only: l_spectral, ex_r, ey_r, ez_r, bx_r, by_r, bz_r, &
-        jx_r, jy_r, jz_r, rho_r, rhoold_r
-!    USE fastfft
+    USE fields, only: nxguards, nyguards, nzguards, & ! Size of the guard regions    
+         ex_r, ey_r, ez_r, bx_r, by_r, bz_r, &
+         jx_r, jy_r, jz_r, rho_r, rhoold_r, &
+         exf, eyf, ezf, bxf, byf, bzf, &
+         jxf, jyf, jzf, rhof, rhooldf, &
+         l_spectral
 #if defined(FFTW)
-    USE fourier_psaotd
-!    USE fourier
+    USE fourier_psaotd, only: init_plans_blocks
 #endif
     IMPLICIT NONE
 
@@ -69,12 +71,22 @@ contains
 
 !    l_staggered = .TRUE.
 !    CALL DFFTW_INIT_THREADS(iret)
-!    fftw_threads_ok = .TRUE.
-    ! This is necessary for the initialization of the global FFT
+    !    fftw_threads_ok = .TRUE.
+    
+    ! Define size of domains: necessary for the initialization of the global FFT
     nx_global = INT(global_hi(1)-global_lo(1),idp)
     ny_global = INT(global_hi(2)-global_lo(2),idp)
     nz_global = INT(global_hi(3)-global_lo(3),idp)
+    nx = INT(local_hi(1)-local_lo(1),idp)
+    ny = INT(local_hi(2)-local_lo(2),idp)
+    nz = INT(local_hi(3)-local_lo(3),idp)
+    ! PICSAR does not need to distinguish physical and guard cells for the global FFT;
+    ! only nx+2*nxguards counts. Therefore we declare 0 guard cells for simplicity
+    nxguards = 0_idp
+    nyguards = 0_idp
+    nzguards = 0_idp
 
+    ! Point the fields in the PICSAR modules to the fields provided by WarpX
     ex_r => ex
     ey_r => ey
     ez_r => ez
@@ -86,23 +98,18 @@ contains
     jz_r => jz
     rho_r => rho
     rhoold_r => rhoold
-
-!      nkx=(2*nxguards+nx+1)/2+1! Real To Complex Transform
-!      nky=(2*nyguards+ny+1)
-!      nkz=(2*nzguards+nz+1)
-
-!      IF(.NOT. ASSOCIATED(exf)) ALLOCATE(exf(nkx, nky, nkz))
-!      IF(.NOT. ASSOCIATED(eyf)) ALLOCATE(eyf(nkx, nky, nkz))
-!      IF(.NOT. ASSOCIATED(ezf)) ALLOCATE(ezf(nkx, nky, nkz))
-!      IF(.NOT. ASSOCIATED(bxf)) ALLOCATE(bxf(nkx, nky, nkz))
-!      IF(.NOT. ASSOCIATED(byf)) ALLOCATE(byf(nkx, nky, nkz))
-!      IF(.NOT. ASSOCIATED(bzf)) ALLOCATE(bzf(nkx, nky, nkz))
-!      IF(.NOT. ASSOCIATED(jxf)) ALLOCATE(jxf(nkx, nky, nkz))
-!      IF(.NOT. ASSOCIATED(jyf)) ALLOCATE(jyf(nkx, nky, nkz))
-!      IF(.NOT. ASSOCIATED(jzf)) ALLOCATE(jzf(nkx, nky, nkz))
-!      IF(.NOT. ASSOCIATED(rhof)) ALLOCATE(rhof(nkx, nky, nkz))
-!      IF(.NOT. ASSOCIATED(rhooldf)) ALLOCATE(rhooldf(nkx, nky, nkz))
-
+    ! Allocate Fourier space fields of the same size
+    ALLOCATE(exf(nx, ny, nz))
+    ALLOCATE(eyf(nx, ny, nz))
+    ALLOCATE(ezf(nx, ny, nz))
+    ALLOCATE(bxf(nx, ny, nz))
+    ALLOCATE(byf(nx, ny, nz))
+    ALLOCATE(bzf(nx, ny, nz))
+    ALLOCATE(jxf(nx, ny, nz))
+    ALLOCATE(jyf(nx, ny, nz))
+    ALLOCATE(jzf(nx, ny, nz))
+    ALLOCATE(rhof(nx, ny, nz))
+    ALLOCATE(rhooldf(nx, ny, nz))
 
 !    CALL init_plans_blocks
 
@@ -116,14 +123,6 @@ contains
     call fftw_mpi_cleanup()
     call mpi_comm_free(comm, ierr)
   end subroutine tps_mpi_finalize
-
-
-  subroutine tps_init_plans_blocks () bind(c,name='init_plans_blocks')
-    ! picsar: select_case_dims_local
-    ! picsar: init_gpstd
-
-
-  end subroutine tps_init_plans_blocks
 
 
   subroutine tps_push_ebfield (cp,nvar)

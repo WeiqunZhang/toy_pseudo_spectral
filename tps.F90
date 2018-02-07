@@ -32,14 +32,16 @@ contains
   SUBROUTINE tps_fft_init( dim, global_lo, global_hi, local_lo, local_hi, &
            ex, ey, ez, bx, by, bz, jx, jy, jz, rho, rhoold ) &
        BIND(C,name='tps_fft_init')
-    
+
     USE shared_data, only: rank, c_dim, p3dfft_flag, &
          fftw_with_mpi, fftw_threads_ok, fftw_hybrid, fftw_mpi_transpose, &
          nx_global, ny_global, nz_global, & ! Size of global FFT
-         nx, ny, nz ! Size of local subdomains
+         nx, ny, nz, & ! Size of local subdomains
+         dx, dy, dz
     USE gpstd_solver, only: init_gpstd
-    USE constants, only: num
+    USE constants, only: num, clight
     USE picsar_precision, only: idp
+    USE params, only: dt
     USE fields, only: nxguards, nyguards, nzguards, & ! Size of guard regions
          ex_r, ey_r, ez_r, bx_r, by_r, bz_r, &
          jx_r, jy_r, jz_r, rho_r, rhoold_r, &
@@ -56,29 +58,17 @@ contains
     integer, intent(in) :: local_lo(BL_SPACEDIM), local_hi(BL_SPACEDIM)
     integer, value, intent(in) :: dim
 
-    REAL(num), INTENT(INOUT), TARGET, DIMENSION(local_lo(1):local_hi(1), &
-                                                local_lo(2):local_hi(2), &
-                                                local_lo(3):local_hi(3)) :: &
+    REAL(num), INTENT(INOUT), TARGET, DIMENSION(1:local_hi(1)-local_lo(1), &
+                                                1:local_hi(2)-local_lo(2), &
+                                                1:local_hi(3)-local_lo(3)) :: &
          ex, ey, ez, bx, by, bz, jx, jy, jz, rho, rhoold
-
-    l_spectral  = .TRUE.   ! Activate spectral Solver, using FFT
-
-    ! Initialize FFT plans
-    c_dim = INT(dim,idp)   ! Dimensionality of the simulation (2d/3d)
-    fftw_with_mpi = .TRUE. ! Activate MPI FFTW
-    fftw_hybrid = .FALSE.   ! FFT per MPI subgroup (instead of global)
-    fftw_mpi_transpose = .FALSE. ! Do not transpose the data
-    fftw_threads_ok = .FALSE.   ! Do not use threads for FFTW
-    p3dfft_flag = .FALSE.
-    ! For the calculation of the modified [k] vectors
-    l_staggered = .TRUE.
-    norderx = 8_idp
-    nordery = 12_idp
-    norderz = 16_idp
 
 !    CALL DFFTW_INIT_THREADS(iret)
     !    fftw_threads_ok = .TRUE.
-    
+    PRINT *, rank, local_lo(1), local_lo(2), local_lo(3)
+    PRINT *, rank, local_hi(1), local_hi(2), local_hi(3)
+    PRINT *, rank, local_hi(1)-local_lo(1), local_hi(2)-local_lo(2), local_hi(3)-local_lo(3)
+
     ! Define size of domains: necessary for the initialization of the global FFT
     nx_global = INT(global_hi(1)-global_lo(1),idp)
     ny_global = INT(global_hi(2)-global_lo(2),idp)
@@ -87,11 +77,29 @@ contains
     ny = INT(local_hi(2)-local_lo(2),idp)
     nz = INT(local_hi(3)-local_lo(3),idp)
     local_nz = nz
-    ! PICSAR does not need to distinguish physical and guard cells for the global FFT;
-    ! only nx+2*nxguards counts. Therefore we declare 0 guard cells for simplicity
+    ! No need to distinguish physical and guard cells for the global FFT;
+    ! only nx+2*nxguards counts. Thus we declare 0 guard cells for simplicity
     nxguards = 0_idp
     nyguards = 0_idp
     nzguards = 0_idp
+
+    ! For the calculation of the modified [k] vectors
+    l_staggered = .TRUE.
+    norderx = 8_idp
+    nordery = 12_idp
+    norderz = 16_idp
+    dx = 1./nx_global
+    dy = 1./ny_global
+    dz = 1./nz_global
+    dt = 1./60/clight ! Take advantage of the fact that there is no CFL
+    ! Define parameters of FFT plans
+    c_dim = INT(dim,idp)   ! Dimensionality of the simulation (2d/3d)
+    fftw_with_mpi = .TRUE. ! Activate MPI FFTW
+    fftw_hybrid = .FALSE.   ! FFT per MPI subgroup (instead of global)
+    fftw_mpi_transpose = .FALSE. ! Do not transpose the data
+    fftw_threads_ok = .FALSE.   ! Do not use threads for FFTW
+    p3dfft_flag = .FALSE.
+    l_spectral  = .TRUE.   ! Activate spectral Solver, using FFT
 
     ! Point the fields in the PICSAR modules to the fields provided by WarpX
     ex_r => ex
@@ -120,7 +128,7 @@ contains
 
     CALL init_plans_blocks
 !    CALL init_gpstd()
-    
+
   END SUBROUTINE tps_fft_init
 
 

@@ -14,6 +14,7 @@ extern "C" {
     Real* bx, Real* by, Real* bz,
   	Real* jx, Real* jy, Real* jz,
     Real* rho, Real* rhoold );
+  void push_psatd_ebfield_3d_();
 
 #ifdef __cplusplus
 }

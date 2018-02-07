@@ -118,8 +118,8 @@ contains
     ALLOCATE(rhof(nx, ny, nz))
     ALLOCATE(rhooldf(nx, ny, nz))
 
-!    CALL init_plans_blocks
-    CALL init_gpstd()
+    CALL init_plans_blocks
+!    CALL init_gpstd()
     
   END SUBROUTINE tps_fft_init
 

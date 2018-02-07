@@ -11,11 +11,11 @@ void toy ()
 {
     // Since FFTW can do only 1D domain decomposition,
     // for the moment the box is chosen to be long in the x direction
-    // With the added guard cells, this will produce a 4 boxes of 32^3
-    Box domain(IntVect(0,0,0), IntVect(95,15,15));
+    // With the added guard cells, this will produce a 4 boxes of 64^3
+    Box domain(IntVect(0,0,0), IntVect(223,31,31));
     domain.grow(16);
     BoxArray ba(domain);
-    ba.maxSize(32);
+    ba.maxSize(64);
     DistributionMapping dm{ba};
 
     const IntVect Bx_nodal_flag(1,0,0);
@@ -48,8 +48,13 @@ void toy ()
 
     // initialize FFTW plans
     {
+      int count = 0;
       // Loop through the grids
       for ( MFIter mfi(Ex); mfi.isValid(); ++mfi ) {
+	// Make sure that there is only 1 grid per MPI
+	AMREX_ALWAYS_ASSERT_WITH_MESSAGE( count < 1,
+	       "Only one grid per MPI is allowed" );
+	count ++;
 	tps_fft_init( BL_SPACEDIM,
 		      domain.loVect(), domain.hiVect(),
 		      Ex[mfi].loVect(), Ex[mfi].hiVect(),

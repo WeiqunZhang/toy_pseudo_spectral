@@ -33,19 +33,21 @@ contains
            ex, ey, ez, bx, by, bz, jx, jy, jz, rho, rhoold ) &
        BIND(C,name='tps_fft_init')
     
-    USE shared_data, only: rank, c_dim, &
-         fftw_with_mpi, p3dfft_flag, fftw_threads_ok, fftw_hybrid, fftw_mpi_transpose, &
+    USE shared_data, only: rank, c_dim, p3dfft_flag, &
+         fftw_with_mpi, fftw_threads_ok, fftw_hybrid, fftw_mpi_transpose, &
          nx_global, ny_global, nz_global, & ! Size of global FFT
          nx, ny, nz ! Size of local subdomains
+    USE gpstd_solver, only: init_gpstd
     USE constants, only: num
     USE picsar_precision, only: idp
-    USE fields, only: nxguards, nyguards, nzguards, & ! Size of the guard regions    
+    USE fields, only: nxguards, nyguards, nzguards, & ! Size of guard regions
          ex_r, ey_r, ez_r, bx_r, by_r, bz_r, &
          jx_r, jy_r, jz_r, rho_r, rhoold_r, &
          exf, eyf, ezf, bxf, byf, bzf, &
          jxf, jyf, jzf, rhof, rhooldf, &
-         l_spectral
+         l_spectral, l_staggered, norderx, nordery, norderz
 #if defined(FFTW)
+    USE mpi_fftw3, only: local_nz
     USE fourier_psaotd, only: init_plans_blocks
 #endif
     IMPLICIT NONE
@@ -68,8 +70,12 @@ contains
     fftw_mpi_transpose = .FALSE. ! Do not transpose the data
     fftw_threads_ok = .FALSE.   ! Do not use threads for FFTW
     p3dfft_flag = .FALSE.
+    ! For the calculation of the modified [k] vectors
+    l_staggered = .TRUE.
+    norderx = 8_idp
+    nordery = 12_idp
+    norderz = 16_idp
 
-!    l_staggered = .TRUE.
 !    CALL DFFTW_INIT_THREADS(iret)
     !    fftw_threads_ok = .TRUE.
     
@@ -80,6 +86,7 @@ contains
     nx = INT(local_hi(1)-local_lo(1),idp)
     ny = INT(local_hi(2)-local_lo(2),idp)
     nz = INT(local_hi(3)-local_lo(3),idp)
+    local_nz = nz
     ! PICSAR does not need to distinguish physical and guard cells for the global FFT;
     ! only nx+2*nxguards counts. Therefore we declare 0 guard cells for simplicity
     nxguards = 0_idp
@@ -112,7 +119,8 @@ contains
     ALLOCATE(rhooldf(nx, ny, nz))
 
 !    CALL init_plans_blocks
-
+    CALL init_gpstd()
+    
   END SUBROUTINE tps_fft_init
 
 

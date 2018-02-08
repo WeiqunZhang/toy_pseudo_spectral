@@ -2,6 +2,7 @@
 #include <AMReX.H>
 #include <AMReX_Print.H>
 #include <AMReX_MultiFab.H>
+#include <AMReX_PlotFileUtil.H>
 
 #include "TPS_F.H"
 
@@ -13,6 +14,8 @@ void toy ()
     // for the moment the box is chosen to be long in the x direction
     // With the added guard cells, this will produce a 4 boxes of 32^3
     Box domain(IntVect(0,0,0), IntVect(15,15,111));
+    RealBox real_box({AMREX_D_DECL(-1.0,-1.0,-1.0)},
+                 {AMREX_D_DECL( 1.0, 1.0, 1.0)});
     domain.grow(8);
     BoxArray ba(domain);
     ba.maxSize(32);
@@ -57,9 +60,22 @@ void toy ()
       }
     }
 
-    // Push the E and B fields
+    // Loop over iterations
     for ( int i_step=0; i_step<N_steps; i_step++ ){
       std::cout << "Step " << i_step << "/" << N_steps << std::endl;
+
+
+      // Write plotfile
+      {
+	const std::string& pfname = amrex::Concatenate("./data/plt",i_step);
+	const Vector<std::string>& varnames {"x"};
+	std::array<int,AMREX_SPACEDIM> is_periodic {AMREX_D_DECL(1,1,1)};
+	amrex::WriteSingleLevelPlotfile (pfname, Ex, varnames,
+		     Geometry(domain, &real_box, 0, is_periodic.data()),
+					 0., 0);
+      }
+      
+      // Push the E and B fields
       push_psatd_ebfield_3d_();
     }
     

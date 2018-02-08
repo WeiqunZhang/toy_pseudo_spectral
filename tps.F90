@@ -37,6 +37,7 @@ contains
          fftw_with_mpi, fftw_threads_ok, fftw_hybrid, fftw_mpi_transpose, &
          nx_global, ny_global, nz_global, & ! Size of global FFT
          nx, ny, nz, & ! Size of local subdomains
+         nkx, nky, nkz, & ! Size of local ffts
          dx, dy, dz
     USE gpstd_solver, only: init_gpstd
     USE constants, only: num, clight
@@ -58,24 +59,26 @@ contains
     integer, intent(in) :: local_lo(BL_SPACEDIM), local_hi(BL_SPACEDIM)
     integer, value, intent(in) :: dim
 
-    REAL(num), INTENT(INOUT), TARGET, DIMENSION(1:local_hi(1)-local_lo(1), &
-                                                1:local_hi(2)-local_lo(2), &
-                                                1:local_hi(3)-local_lo(3)) :: &
+    REAL(num), INTENT(INOUT), TARGET, DIMENSION(1:local_hi(1)-local_lo(1)+1, &
+                                                1:local_hi(2)-local_lo(2)+1, &
+                                                1:local_hi(3)-local_lo(3)+1) :: &
          ex, ey, ez, bx, by, bz, jx, jy, jz, rho, rhoold
 
 !    CALL DFFTW_INIT_THREADS(iret)
     !    fftw_threads_ok = .TRUE.
     PRINT *, rank, local_lo(1), local_lo(2), local_lo(3)
     PRINT *, rank, local_hi(1), local_hi(2), local_hi(3)
-    PRINT *, rank, local_hi(1)-local_lo(1), local_hi(2)-local_lo(2), local_hi(3)-local_lo(3)
+    PRINT *, rank, local_hi(1)-local_lo(1) + 1, &
+         local_hi(2)-local_lo(2) + 1, &
+         local_hi(3)-local_lo(3) + 1
 
     ! Define size of domains: necessary for the initialization of the global FFT
-    nx_global = INT(global_hi(1)-global_lo(1),idp)
-    ny_global = INT(global_hi(2)-global_lo(2),idp)
-    nz_global = INT(global_hi(3)-global_lo(3),idp)
-    nx = INT(local_hi(1)-local_lo(1),idp)
-    ny = INT(local_hi(2)-local_lo(2),idp)
-    nz = INT(local_hi(3)-local_lo(3),idp)
+    nx_global = INT(global_hi(1)-global_lo(1)+1,idp)
+    ny_global = INT(global_hi(2)-global_lo(2)+1,idp)
+    nz_global = INT(global_hi(3)-global_lo(3)+1,idp)
+    nx = INT(local_hi(1)-local_lo(1)+1,idp)
+    ny = INT(local_hi(2)-local_lo(2)+1,idp)
+    nz = INT(local_hi(3)-local_lo(3)+1,idp)
     local_nz = nz
     ! No need to distinguish physical and guard cells for the global FFT;
     ! only nx+2*nxguards counts. Thus we declare 0 guard cells for simplicity
@@ -114,17 +117,20 @@ contains
     rho_r => rho
     rhoold_r => rhoold
     ! Allocate Fourier space fields of the same size
-    ALLOCATE(exf(nx, ny, nz))
-    ALLOCATE(eyf(nx, ny, nz))
-    ALLOCATE(ezf(nx, ny, nz))
-    ALLOCATE(bxf(nx, ny, nz))
-    ALLOCATE(byf(nx, ny, nz))
-    ALLOCATE(bzf(nx, ny, nz))
-    ALLOCATE(jxf(nx, ny, nz))
-    ALLOCATE(jyf(nx, ny, nz))
-    ALLOCATE(jzf(nx, ny, nz))
-    ALLOCATE(rhof(nx, ny, nz))
-    ALLOCATE(rhooldf(nx, ny, nz))
+    nkx = nx/2 + 1
+    nky = ny
+    nkz = nz
+    ALLOCATE(exf(1:nkx, 1:nky, 1:nkz))
+    ALLOCATE(eyf(1:nkx, 1:nky, 1:nkz))
+    ALLOCATE(ezf(1:nkx, 1:nky, 1:nkz))
+    ALLOCATE(bxf(1:nkx, 1:nky, 1:nkz))
+    ALLOCATE(byf(1:nkx, 1:nky, 1:nkz))
+    ALLOCATE(bzf(1:nkx, 1:nky, 1:nkz))
+    ALLOCATE(jxf(1:nkx, 1:nky, 1:nkz))
+    ALLOCATE(jyf(1:nkx, 1:nky, 1:nkz))
+    ALLOCATE(jzf(1:nkx, 1:nky, 1:nkz))
+    ALLOCATE(rhof(1:nkx, 1:nky, 1:nkz))
+    ALLOCATE(rhooldf(1:nkx, 1:nky, 1:nkz))
 
     CALL init_plans_blocks
 !    CALL init_gpstd()

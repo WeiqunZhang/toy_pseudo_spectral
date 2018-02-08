@@ -11,13 +11,11 @@ void toy ()
 {
     // Since FFTW can do only 1D domain decomposition,
     // for the moment the box is chosen to be long in the x direction
-    // With the added guard cells, this will produce a 4 boxes of 64^3
-    Box domain(IntVect(0,0,0), IntVect(223,32,32));
-    domain.grow(16);
+    // With the added guard cells, this will produce a 4 boxes of 32^3
+    Box domain(IntVect(0,0,0), IntVect(15,15,111));
+    domain.grow(8);
     BoxArray ba(domain);
-    // For now declare all quantities as nodal
-    ba = amrex::convert(ba, IntVect(0,0,0));
-    ba.maxSize(65);
+    ba.maxSize(32);
     DistributionMapping dm{ba};
 
     int N_steps = 64;
@@ -61,7 +59,7 @@ void toy ()
 
     // Push the E and B fields
     for ( int i_step=0; i_step<N_steps; i_step++ ){
-      std::cout << "Step i_step" << std::endl;
+      std::cout << "Step " << i_step << "/" << N_steps << std::endl;
       push_psatd_ebfield_3d_();
     }
     

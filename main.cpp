@@ -12,15 +12,19 @@ void toy ()
 {
     // Since FFTW can do only 1D domain decomposition,
     // for the moment the box is chosen to be long in the x direction
-    // With the added guard cells, this will produce a 4 boxes of 32^3
-    Box domain(IntVect(0,0,0), IntVect(15,15,111));
+    // With the added guard cells, this will produce a 4 boxes of N^3
+    int N=32;
+    int nguards=8;
+    Box domain(IntVect(nguards,nguards,nguards),
+	       IntVect(N-nguards-1,N-nguards-1,4*N-nguards-1));
+    domain.grow(nguards);
+    BoxArray ba(domain);
+    ba.maxSize(N);
+    DistributionMapping dm{ba};
     RealBox real_box({AMREX_D_DECL(-1.0,-1.0,-1.0)},
                  {AMREX_D_DECL( 1.0, 1.0, 1.0)});
-    domain.grow(8);
-    BoxArray ba(domain);
-    ba.maxSize(32);
-    DistributionMapping dm{ba};
-
+    Geometry geom(domain, &real_box, 0);
+    
     int N_steps = 64;
     MultiFab Ex(ba,dm,1,0);  Ex.setVal(0.);
     MultiFab Ey(ba,dm,1,0);  Ey.setVal(0.);
@@ -68,11 +72,7 @@ void toy ()
       // Write plotfile
       {
 	const std::string& pfname = amrex::Concatenate("./data/plt",i_step);
-	const Vector<std::string>& varnames {"x"};
-	std::array<int,AMREX_SPACEDIM> is_periodic {AMREX_D_DECL(1,1,1)};
-	amrex::WriteSingleLevelPlotfile (pfname, Ex, varnames,
-		     Geometry(domain, &real_box, 0, is_periodic.data()),
-					 0., 0);
+	amrex::WriteSingleLevelPlotfile (pfname, Ex, {"Ex"}, geom, 0., 0 );
       }
       
       // Push the E and B fields

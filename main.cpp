@@ -12,11 +12,12 @@ void toy ()
 {
     // Since FFTW can do only 1D domain decomposition,
     // for the moment the box is chosen to be long in the x direction
-    // With the added guard cells, this will produce a 4 boxes of N^3
-    int N=32;
-    int nguards=8;
+    // With the added guard cells, this will produce a n_mpi boxes of N^3
+    int N=4;
+    int nguards=2;
+    int nmpi=1;
     Box domain(IntVect(nguards,nguards,nguards),
-	       IntVect(N-nguards-1,N-nguards-1,4*N-nguards-1));
+	       IntVect(N-nguards-1,N-nguards-1,nmpi*N-nguards-1));
     domain.grow(nguards);
     BoxArray ba(domain);
     ba.maxSize(N);
@@ -25,7 +26,7 @@ void toy ()
                  {AMREX_D_DECL( 1.0, 1.0, 1.0)});
     Geometry geom(domain, &real_box, 0);
     
-    int N_steps = 64;
+    int N_steps = 3;
     MultiFab Ex(ba,dm,1,0);  Ex.setVal(0.);
     MultiFab Ey(ba,dm,1,0);  Ey.setVal(0.);
     MultiFab Ez(ba,dm,1,0);  Ez.setVal(0.);
@@ -35,8 +36,8 @@ void toy ()
     MultiFab jx(ba,dm,1,0);  jx.setVal(0.);
     MultiFab jy(ba,dm,1,0);  jy.setVal(0.);
     MultiFab jz(ba,dm,1,0);  jz.setVal(0.);
-    MultiFab rho(ba,dm,1,0);  rho.setVal(0.);
-    MultiFab rhoold(ba,dm,1,0);  rhoold.setVal(0.);
+    MultiFab rho1(ba,dm,1,0); rho1.setVal(0.);
+    MultiFab rho2(ba,dm,1,0); rho2.setVal(0.);
 
     // initialize MPI
     {
@@ -60,7 +61,7 @@ void toy ()
 		      Ex[mfi].dataPtr(), Ey[mfi].dataPtr(), Ez[mfi].dataPtr(),
 		      Bx[mfi].dataPtr(), By[mfi].dataPtr(), Bz[mfi].dataPtr(),
 		      jx[mfi].dataPtr(), jy[mfi].dataPtr(), jz[mfi].dataPtr(),
-		      rho[mfi].dataPtr(), rhoold[mfi].dataPtr() );
+		      rho1[mfi].dataPtr(), rho2[mfi].dataPtr() );
       }
     }
 

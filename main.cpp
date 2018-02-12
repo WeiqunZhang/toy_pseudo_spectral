@@ -49,15 +49,15 @@ void toy ()
     {
       int count = 0;
       // Loop through the grids
-      for ( MFIter mfi(Ey); mfi.isValid(); ++mfi ) {
+      for ( MFIter mfi(Ex); mfi.isValid(); ++mfi ) {
    	// Make sure that there is only 1 grid per MPI
 	AMREX_ALWAYS_ASSERT_WITH_MESSAGE( count < 1,
 		  "Only one grid per MPI is allowed" );
 	count ++;
 	// Initialize fields
-	initialize_fields( Ex[mfi].dataPtr(),
+	initialize_fields( Ez[mfi].dataPtr(),
 			   domain.loVect(), domain.hiVect(),
-			   Ex[mfi].loVect(), Ex[mfi].hiVect() );
+			   Ez[mfi].loVect(), Ez[mfi].hiVect() );
 	// Initialize fft
 	tps_fft_init( BL_SPACEDIM,
 		      domain.loVect(), domain.hiVect(),
@@ -77,7 +77,7 @@ void toy ()
       // Write plotfile
       {
 	const std::string& pfname = amrex::Concatenate("./data/plt",i_step);
-	amrex::WriteSingleLevelPlotfile (pfname, Ey, {"Ey"}, geom, 0., 0 );
+	amrex::WriteSingleLevelPlotfile (pfname, Ez, {"Ez"}, geom, 0., 0 );
       }
       
       // Push the E and B fields

@@ -40,7 +40,8 @@ contains
          nx_global, ny_global, nz_global, & ! Size of global FFT
          nx, ny, nz, & ! Size of local subdomains
          nkx, nky, nkz, & ! Size of local ffts
-         dx, dy, dz
+         dx, dy, dz, &
+         iz_min_r, iz_max_r, iy_min_r, iy_max_r, ix_min_r, ix_max_r !Loop bounds
     USE gpstd_solver, only: init_gpstd
     USE constants, only: num, clight
     USE picsar_precision, only: idp
@@ -64,9 +65,9 @@ contains
     integer :: nx_padded
 
     REAL(num), INTENT(INOUT), TARGET, &
-         DIMENSION(1:local_hi(1)-local_lo(1)+1, &
-                   1:local_hi(2)-local_lo(2)+1, &
-                   1:local_hi(3)-local_lo(3)+1) :: &
+         DIMENSION(0:local_hi(1)-local_lo(1), &
+                   0:local_hi(2)-local_lo(2), &
+                   0:local_hi(3)-local_lo(3)) :: &
                    ex_wrpx, ey_wrpx, ez_wrpx, &
                    bx_wrpx, by_wrpx, bz_wrpx, &
                    jx_wrpx, jy_wrpx, jz_wrpx, rho_wrpx, rhoold_wrpx
@@ -125,17 +126,24 @@ contains
     rhoold => rhoold_wrpx
     ! Allocate padded arrays for MPI FFTW
     nx_padded = 2*(nx/2 + 1)
-    ALLOCATE(exf(1:nx_padded, 1:ny, 1:nz))
-    ALLOCATE(eyf(1:nx_padded, 1:ny, 1:nz))
-    ALLOCATE(ezf(1:nx_padded, 1:ny, 1:nz))
-    ALLOCATE(bxf(1:nx_padded, 1:ny, 1:nz))
-    ALLOCATE(byf(1:nx_padded, 1:ny, 1:nz))
-    ALLOCATE(bzf(1:nx_padded, 1:ny, 1:nz))
-    ALLOCATE(jxf(1:nx_padded, 1:ny, 1:nz))
-    ALLOCATE(jyf(1:nx_padded, 1:ny, 1:nz))
-    ALLOCATE(jzf(1:nx_padded, 1:ny, 1:nz))
-    ALLOCATE(rhof(1:nx_padded, 1:ny, 1:nz))
-    ALLOCATE(rhooldf(1:nx_padded, 1:ny, 1:nz))
+    ALLOCATE(ex_r(1:nx_padded, 1:ny, 1:nz))
+    ALLOCATE(ey_r(1:nx_padded, 1:ny, 1:nz))
+    ALLOCATE(ez_r(1:nx_padded, 1:ny, 1:nz))
+    ALLOCATE(bx_r(1:nx_padded, 1:ny, 1:nz))
+    ALLOCATE(by_r(1:nx_padded, 1:ny, 1:nz))
+    ALLOCATE(bz_r(1:nx_padded, 1:ny, 1:nz))
+    ALLOCATE(jx_r(1:nx_padded, 1:ny, 1:nz))
+    ALLOCATE(jy_r(1:nx_padded, 1:ny, 1:nz))
+    ALLOCATE(jz_r(1:nx_padded, 1:ny, 1:nz))
+    ALLOCATE(rho_r(1:nx_padded, 1:ny, 1:nz))
+    ALLOCATE(rhoold_r(1:nx_padded, 1:ny, 1:nz))
+    ! Set array bounds when copying ex to ex_r in PICSAR
+    ix_min_r = 1
+    ix_max_r = nx
+    iy_min_r = 1
+    iy_max_r = ny
+    iz_min_r = 1
+    iz_max_r = nz
     ! Allocate Fourier space fields of the same size
     nkx = nx/2 + 1
     nky = ny

@@ -30,11 +30,13 @@ contains
   ! __________________________________________________________________________
 
   SUBROUTINE tps_fft_init( dim, global_lo, global_hi, local_lo, local_hi, &
-           ex, ey, ez, bx, by, bz, jx, jy, jz, rho, rhoold ) &
+       ex_wrpx, ey_wrpx, ez_wrpx, bx_wrpx, by_wrpx, bz_wrpx, &
+       jx_wrpx, jy_wrpx, jz_wrpx, rho_wrpx, rhoold_wrpx ) &
        BIND(C,name='tps_fft_init')
 
     USE shared_data, only: rank, c_dim, p3dfft_flag, &
          fftw_with_mpi, fftw_threads_ok, fftw_hybrid, fftw_mpi_transpose, &
+         rho, rhoold, &
          nx_global, ny_global, nz_global, & ! Size of global FFT
          nx, ny, nz, & ! Size of local subdomains
          nkx, nky, nkz, & ! Size of local ffts
@@ -44,6 +46,7 @@ contains
     USE picsar_precision, only: idp
     USE params, only: dt
     USE fields, only: nxguards, nyguards, nzguards, & ! Size of guard regions
+         ex, ey, ez, bx, by, bz, jx, jy, jz, &
          ex_r, ey_r, ez_r, bx_r, by_r, bz_r, &
          jx_r, jy_r, jz_r, rho_r, rhoold_r, &
          exf, eyf, ezf, bxf, byf, bzf, &
@@ -58,11 +61,15 @@ contains
     integer, intent(in) :: global_lo(BL_SPACEDIM), global_hi(BL_SPACEDIM)
     integer, intent(in) :: local_lo(BL_SPACEDIM), local_hi(BL_SPACEDIM)
     integer, value, intent(in) :: dim
+    integer :: nx_padded
 
-    REAL(num), INTENT(INOUT), TARGET, DIMENSION(1:local_hi(1)-local_lo(1)+1, &
-                                                1:local_hi(2)-local_lo(2)+1, &
-                                                1:local_hi(3)-local_lo(3)+1) :: &
-         ex, ey, ez, bx, by, bz, jx, jy, jz, rho, rhoold
+    REAL(num), INTENT(INOUT), TARGET, &
+         DIMENSION(1:local_hi(1)-local_lo(1)+1, &
+                   1:local_hi(2)-local_lo(2)+1, &
+                   1:local_hi(3)-local_lo(3)+1) :: &
+                   ex_wrpx, ey_wrpx, ez_wrpx, &
+                   bx_wrpx, by_wrpx, bz_wrpx, &
+                   jx_wrpx, jy_wrpx, jz_wrpx, rho_wrpx, rhoold_wrpx
 
 !    CALL DFFTW_INIT_THREADS(iret)
     !    fftw_threads_ok = .TRUE.
@@ -105,17 +112,30 @@ contains
     l_spectral  = .TRUE.   ! Activate spectral Solver, using FFT
 
     ! Point the fields in the PICSAR modules to the fields provided by WarpX
-    ex_r => ex
-    ey_r => ey
-    ez_r => ez
-    bx_r => bx
-    by_r => by
-    bz_r => bz
-    jx_r => jx
-    jy_r => jy
-    jz_r => jz
-    rho_r => rho
-    rhoold_r => rhoold
+    ex => ex_wrpx
+    ey => ey_wrpx
+    ez => ez_wrpx
+    bx => bx_wrpx
+    by => by_wrpx
+    bz => bz_wrpx
+    jx => jx_wrpx
+    jy => jy_wrpx
+    jz => jz_wrpx
+    rho => rho_wrpx
+    rhoold => rhoold_wrpx
+    ! Allocate padded arrays for MPI FFTW
+    nx_padded = 2*(nx/2 + 1)
+    ALLOCATE(exf(1:nx_padded, 1:ny, 1:nz))
+    ALLOCATE(eyf(1:nx_padded, 1:ny, 1:nz))
+    ALLOCATE(ezf(1:nx_padded, 1:ny, 1:nz))
+    ALLOCATE(bxf(1:nx_padded, 1:ny, 1:nz))
+    ALLOCATE(byf(1:nx_padded, 1:ny, 1:nz))
+    ALLOCATE(bzf(1:nx_padded, 1:ny, 1:nz))
+    ALLOCATE(jxf(1:nx_padded, 1:ny, 1:nz))
+    ALLOCATE(jyf(1:nx_padded, 1:ny, 1:nz))
+    ALLOCATE(jzf(1:nx_padded, 1:ny, 1:nz))
+    ALLOCATE(rhof(1:nx_padded, 1:ny, 1:nz))
+    ALLOCATE(rhooldf(1:nx_padded, 1:ny, 1:nz))
     ! Allocate Fourier space fields of the same size
     nkx = nx/2 + 1
     nky = ny

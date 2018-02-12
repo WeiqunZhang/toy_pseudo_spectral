@@ -138,12 +138,9 @@ contains
     ALLOCATE(rho_r(1:nx_padded, 1:ny, 1:nz))
     ALLOCATE(rhoold_r(1:nx_padded, 1:ny, 1:nz))
     ! Set array bounds when copying ex to ex_r in PICSAR
-    ix_min_r = 1
-    ix_max_r = nx
-    iy_min_r = 1
-    iy_max_r = ny
-    iz_min_r = 1
-    iz_max_r = nz
+    ix_min_r = 1; ix_max_r = nx
+    iy_min_r = 1; iy_max_r = ny
+    iz_min_r = 1; iz_max_r = nz
     ! Allocate Fourier space fields of the same size
     nkx = nx/2 + 1
     nky = ny
@@ -161,10 +158,40 @@ contains
     ALLOCATE(rhooldf(1:nkx, 1:nky, 1:nkz))
 
     CALL init_plans_blocks
-!    CALL init_gpstd()
 
   END SUBROUTINE tps_fft_init
 
+
+  ! _________________________________________________________________________
+  !> @brief
+  !> Routine that initializes the fields provided by WarpX with a dirac in Ex
+  !
+  ! __________________________________________________________________________
+  SUBROUTINE initialize_fields( ex, global_lo, global_hi, local_lo, local_hi ) &
+       bind(c, name='initialize_fields')
+
+    USE constants, only: num
+    integer, intent(in) :: global_lo(BL_SPACEDIM), global_hi(BL_SPACEDIM)
+    integer, intent(in) :: local_lo(BL_SPACEDIM), local_hi(BL_SPACEDIM)
+    REAL(num), INTENT(INOUT), &
+         DIMENSION(local_lo(1):local_hi(1), &
+                   local_lo(2):local_hi(2), &
+                   local_lo(3):local_hi(3)) :: ex
+    INTEGER :: ix, iy, iz
+    
+    
+    ix = global_lo(1)/2
+    iy = global_lo(2)/2
+    iz = global_lo(3)/2
+
+    IF ( (ix>=local_lo(1)) .AND. (ix<=local_hi(1)) .AND. &
+         (iy>=local_lo(2)) .AND. (iy<=local_hi(2)) .AND. &
+         (iz>=local_lo(3)) .AND. (iz<=local_hi(3))) THEN
+       ex(ix, iy, iz) = 1
+    ENDIF
+
+  END SUBROUTINE initialize_fields
+    
 
   subroutine tps_mpi_finalize () bind(c,name='tps_mpi_finalize')
     use shared_data, only : comm

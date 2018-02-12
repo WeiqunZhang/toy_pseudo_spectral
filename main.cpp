@@ -45,7 +45,7 @@ void toy ()
         tps_mpi_init(fcomm);
     }
 
-    // initialize FFTW plans
+    // initialize field and FFTW plans
     {
       int count = 0;
       // Loop through the grids
@@ -54,6 +54,10 @@ void toy ()
 	AMREX_ALWAYS_ASSERT_WITH_MESSAGE( count < 1,
 		  "Only one grid per MPI is allowed" );
 	count ++;
+	// Initialize fields
+	initialize_fields( Ex[mfi].dataPtr(),
+			   domain.loVect(), domain.hiVect(),
+			   Ex[mfi].loVect(), Ex[mfi].hiVect() );
 	// Initialize fft
 	tps_fft_init( BL_SPACEDIM,
 		      domain.loVect(), domain.hiVect(),

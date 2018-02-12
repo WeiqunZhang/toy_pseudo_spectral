@@ -96,13 +96,13 @@ contains
 
     ! For the calculation of the modified [k] vectors
     l_staggered = .TRUE.
-    norderx = 8_idp
-    nordery = 12_idp
+    norderx = 16_idp
+    nordery = 16_idp
     norderz = 16_idp
     dx = 1./nx_global
     dy = 1./ny_global
     dz = 1./nz_global
-    dt = 1./60/clight ! Take advantage of the fact that there is no CFL
+    dt = 2 * dz/clight
     ! Define parameters of FFT plans
     c_dim = INT(dim,idp)   ! Dimensionality of the simulation (2d/3d)
     fftw_with_mpi = .TRUE. ! Activate MPI FFTW
@@ -167,7 +167,7 @@ contains
   !> Routine that initializes the fields provided by WarpX with a dirac in Ex
   !
   ! __________________________________________________________________________
-  SUBROUTINE initialize_fields( ex, global_lo, global_hi, local_lo, local_hi ) &
+  SUBROUTINE initialize_fields( field, global_lo, global_hi, local_lo, local_hi ) &
        bind(c, name='initialize_fields')
 
     USE constants, only: num
@@ -176,19 +176,32 @@ contains
     REAL(num), INTENT(INOUT), &
          DIMENSION(local_lo(1):local_hi(1), &
                    local_lo(2):local_hi(2), &
-                   local_lo(3):local_hi(3)) :: ex
-    INTEGER :: ix, iy, iz
+                   local_lo(3):local_hi(3)) :: field
+    INTEGER :: ix, iy, iz, ix0, iy0, iz0, i, j, k
     
     
-    ix = global_lo(1)/2
-    iy = global_lo(2)/2
-    iz = global_lo(3)/2
+    ix0 = (global_hi(1)+global_lo(1))/2
+    iy0 = (global_hi(2)+global_lo(2))/2
+    iz0 = (global_hi(3)+global_lo(3))/2
 
-    IF ( (ix>=local_lo(1)) .AND. (ix<=local_hi(1)) .AND. &
-         (iy>=local_lo(2)) .AND. (iy<=local_hi(2)) .AND. &
-         (iz>=local_lo(3)) .AND. (iz<=local_hi(3))) THEN
-       ex(ix, iy, iz) = 1
-    ENDIF
+    DO i=-1,1
+       DO j=-1, 1
+          DO k=-1, 1
+             ix = ix0 + i
+             iy = iy0 + j
+             iz = iz0 + k
+             IF ( (ix>=local_lo(1)) .AND. (ix<=local_hi(1)) .AND. &
+                  (iy>=local_lo(2)) .AND. (iy<=local_hi(2)) .AND. &
+                  (iz>=local_lo(3)) .AND. (iz<=local_hi(3))) THEN
+                print *, 'Initialized at ', ix, iy, iz
+                field(ix, iy, iz) = (1.-0.5*ABS(i)) * &
+                     (1.-0.5*ABS(j)) * &
+                     (1.-0.5*ABS(k))
+             ENDIF
+          ENDDO
+       ENDDO
+    ENDDO
+    
 
   END SUBROUTINE initialize_fields
     

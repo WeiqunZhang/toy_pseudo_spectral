@@ -13,8 +13,8 @@ void toy ()
     // Since FFTW can do only 1D domain decomposition,
     // for the moment the box is chosen to be long in the x direction
     // With the added guard cells, this will produce a n_mpi boxes of N^3
-    int N=4;
-    int nguards=2;
+    int N=32;
+    int nguards=4;
     int nmpi=1;
     Box domain(IntVect(nguards,nguards,nguards),
 	       IntVect(N-nguards-1,N-nguards-1,nmpi*N-nguards-1));
@@ -26,7 +26,7 @@ void toy ()
                  {AMREX_D_DECL( 1.0, 1.0, 1.0)});
     Geometry geom(domain, &real_box, 0);
     
-    int N_steps = 3;
+    int N_steps = 16;
     MultiFab Ex(ba,dm,1,0);  Ex.setVal(0.);
     MultiFab Ey(ba,dm,1,0);  Ey.setVal(0.);
     MultiFab Ez(ba,dm,1,0);  Ez.setVal(0.);
@@ -49,7 +49,7 @@ void toy ()
     {
       int count = 0;
       // Loop through the grids
-      for ( MFIter mfi(Ex); mfi.isValid(); ++mfi ) {
+      for ( MFIter mfi(Ey); mfi.isValid(); ++mfi ) {
    	// Make sure that there is only 1 grid per MPI
 	AMREX_ALWAYS_ASSERT_WITH_MESSAGE( count < 1,
 		  "Only one grid per MPI is allowed" );
@@ -77,7 +77,7 @@ void toy ()
       // Write plotfile
       {
 	const std::string& pfname = amrex::Concatenate("./data/plt",i_step);
-	amrex::WriteSingleLevelPlotfile (pfname, Ex, {"Ex"}, geom, 0., 0 );
+	amrex::WriteSingleLevelPlotfile (pfname, Ey, {"Ey"}, geom, 0., 0 );
       }
       
       // Push the E and B fields

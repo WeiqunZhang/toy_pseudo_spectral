@@ -15,15 +15,15 @@ void toy ()
     // With the added guard cells, this will produce a n_mpi boxes of N^3
     int N=32;
     int nguards=4;
-    int nmpi=1;
+    int nmpi=2;
     Box domain(IntVect(nguards,nguards,nguards),
 	       IntVect(N-nguards-1,N-nguards-1,nmpi*N-nguards-1));
     domain.grow(nguards);
     BoxArray ba(domain);
     ba.maxSize(N);
     DistributionMapping dm{ba};
-    RealBox real_box({AMREX_D_DECL(-1.0,-1.0,-1.0)},
-                 {AMREX_D_DECL( 1.0, 1.0, 1.0)});
+    RealBox real_box({AMREX_D_DECL(0.0,0.0,0.0)},
+		     {AMREX_D_DECL( 1.0*N, 1.0*N, 1.0*nmpi*N)});
     Geometry geom(domain, &real_box, 0);
     
     int N_steps = 16;
@@ -55,9 +55,9 @@ void toy ()
 		  "Only one grid per MPI is allowed" );
 	count ++;
 	// Initialize fields
-	initialize_fields( Ez[mfi].dataPtr(),
+	initialize_fields( Ex[mfi].dataPtr(),
 			   domain.loVect(), domain.hiVect(),
-			   Ez[mfi].loVect(), Ez[mfi].hiVect() );
+			   Ex[mfi].loVect(), Ex[mfi].hiVect() );
 	// Initialize fft
 	tps_fft_init( BL_SPACEDIM,
 		      domain.loVect(), domain.hiVect(),
@@ -77,7 +77,7 @@ void toy ()
       // Write plotfile
       {
 	const std::string& pfname = amrex::Concatenate("./data/plt",i_step);
-	amrex::WriteSingleLevelPlotfile (pfname, Ez, {"Ez"}, geom, 0., 0 );
+	amrex::WriteSingleLevelPlotfile (pfname, Ex, {"Ex"}, geom, 0., 0 );
       }
       
       // Push the E and B fields

@@ -99,9 +99,9 @@ contains
     norderx = 16_idp
     nordery = 16_idp
     norderz = 16_idp
-    dx = 1./nx_global
-    dy = 1./ny_global
-    dz = 1./nz_global
+    dx = 1.
+    dy = 1.
+    dz = 1.
     dt = 2 * dz/clight
     ! Define parameters of FFT plans
     c_dim = INT(dim,idp)   ! Dimensionality of the simulation (2d/3d)
@@ -182,7 +182,7 @@ contains
     
     ix0 = (global_hi(1)+global_lo(1))/2
     iy0 = (global_hi(2)+global_lo(2))/2
-    iz0 = (global_hi(3)+global_lo(3))/2
+    iz0 = (global_hi(3)+global_lo(3))/4
 
     DO i=-1,1
        DO j=-1, 1

@@ -1,6 +1,7 @@
 
 module tps
 
+  use, intrinsic :: iso_c_binding
   implicit none
 
 contains
@@ -34,7 +35,7 @@ contains
        jx_wrpx, jy_wrpx, jz_wrpx, rho_wrpx, rhoold_wrpx ) &
        BIND(C,name='tps_fft_init')
 
-    USE shared_data, only: rank, c_dim, p3dfft_flag, &
+    USE shared_data, only: rank, comm, c_dim, p3dfft_flag, &
          fftw_with_mpi, fftw_threads_ok, fftw_hybrid, fftw_mpi_transpose, &
          rho, rhoold, &
          nx_global, ny_global, nz_global, & ! Size of global FFT
@@ -54,7 +55,7 @@ contains
          jxf, jyf, jzf, rhof, rhooldf, &
          l_spectral, l_staggered, norderx, nordery, norderz
 #if defined(FFTW)
-    USE mpi_fftw3, only: local_nz
+    USE mpi_fftw3, only: local_nz, local_z0, fftw_mpi_local_size_3d, alloc_local
     USE fourier_psaotd, only: init_plans_blocks
 #endif
     IMPLICIT NONE
@@ -87,13 +88,21 @@ contains
     nx = INT(local_hi(1)-local_lo(1)+1,idp)
     ny = INT(local_hi(2)-local_lo(2)+1,idp)
     nz = INT(local_hi(3)-local_lo(3)+1,idp)
-    local_nz = nz
     ! No need to distinguish physical and guard cells for the global FFT;
     ! only nx+2*nxguards counts. Thus we declare 0 guard cells for simplicity
     nxguards = 0_idp
     nyguards = 0_idp
     nzguards = 0_idp
-
+    ! Find the decomposition that FFTW imposes in kspace
+    alloc_local = fftw_mpi_local_size_3d( &
+         INT(nz_global,C_INTPTR_T), &
+         INT(ny_global,C_INTPTR_T), &
+         INT(nx_global,C_INTPTR_T)/2+1, &
+         comm, local_nz, local_z0)
+    IF (local_nz .NE. nz) THEN
+       PRINT *, 'ERRROR'
+    ENDIF
+    
     ! For the calculation of the modified [k] vectors
     l_staggered = .TRUE.
     norderx = 16_idp

@@ -15,7 +15,7 @@ void toy ()
     // With the added guard cells, this will produce a n_mpi boxes of N^3
     int N=32;
     int nguards=4;
-    int nmpi=2;
+    int nmpi=4;
     Box domain(IntVect(nguards,nguards,nguards),
 	       IntVect(N-nguards-1,N-nguards-1,nmpi*N-nguards-1));
     domain.grow(nguards);

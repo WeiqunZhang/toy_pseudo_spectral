@@ -191,7 +191,7 @@ contains
     
     ix0 = (global_hi(1)+global_lo(1))/2
     iy0 = (global_hi(2)+global_lo(2))/2
-    iz0 = (global_hi(3)+global_lo(3))/4
+    iz0 = (global_hi(3)+global_lo(3))/2
 
     DO i=-1,1
        DO j=-1, 1

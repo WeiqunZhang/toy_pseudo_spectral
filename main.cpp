@@ -81,7 +81,15 @@ void toy ()
       }
       
       // Push the E and B fields
-      push_psatd_ebfield_3d_();
+      // Loop through the grids
+      for ( MFIter mfi(Ex); mfi.isValid(); ++mfi ) {
+	tps_push_eb(
+		    Ex[mfi].loVect(), Ex[mfi].hiVect(),
+		    Ex[mfi].dataPtr(), Ey[mfi].dataPtr(), Ez[mfi].dataPtr(),
+		    Bx[mfi].dataPtr(), By[mfi].dataPtr(), Bz[mfi].dataPtr(),
+		    jx[mfi].dataPtr(), jy[mfi].dataPtr(), jz[mfi].dataPtr(),
+		    rho1[mfi].dataPtr(), rho2[mfi].dataPtr() );
+      }
     }
     
     // free MPI

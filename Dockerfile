@@ -7,12 +7,14 @@ RUN apt-get update \
     make \
     git \
     gcc \
+    g++ \
+    gfortran \
     python
 
 # Install MPI
 RUN apt-get install -y \
-    libcr-dev \
-    mpich2
+    openmpi-bin \
+    libopenmpi-dev
     
 # Install FFTW
 RUN apt-get install -y \

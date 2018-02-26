@@ -202,7 +202,6 @@ contains
              IF ( (ix>=local_lo(1)) .AND. (ix<=local_hi(1)) .AND. &
                   (iy>=local_lo(2)) .AND. (iy<=local_hi(2)) .AND. &
                   (iz>=local_lo(3)) .AND. (iz<=local_hi(3))) THEN
-                print *, 'Initialized at ', ix, iy, iz
                 field(ix, iy, iz) = (1.-0.5*ABS(i)) * &
                      (1.-0.5*ABS(j)) * &
                      (1.-0.5*ABS(k))

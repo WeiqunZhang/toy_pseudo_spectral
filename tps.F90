@@ -17,7 +17,49 @@ contains
     rank = lrank
   end subroutine tps_mpi_init
 
+  ! _________________________________________________________________________
+  !> @brief
+  !> Routine that pushes the fields in spectral space
+  ! __________________________________________________________________________
 
+  SUBROUTINE tps_push_eb( local_lo, local_hi, &
+       ex_wrpx, ey_wrpx, ez_wrpx, bx_wrpx, by_wrpx, bz_wrpx, &
+       jx_wrpx, jy_wrpx, jz_wrpx, rho_wrpx, rhoold_wrpx ) &
+       BIND(C,name='tps_push_eb')       
+       
+    USE fields, only: ex, ey, ez, bx, by, bz, jx, jy, jz
+    USE shared_data, only: rhoold, rho
+    USE constants, only: num
+    implicit none
+    
+    integer, intent(in) :: local_lo(BL_SPACEDIM), local_hi(BL_SPACEDIM)
+    REAL(num), INTENT(INOUT), TARGET, &
+         DIMENSION(0:local_hi(1)-local_lo(1), &
+                   0:local_hi(2)-local_lo(2), &
+                   0:local_hi(3)-local_lo(3)) :: &
+                   ex_wrpx, ey_wrpx, ez_wrpx, &
+                   bx_wrpx, by_wrpx, bz_wrpx, &
+                   jx_wrpx, jy_wrpx, jz_wrpx, rho_wrpx, rhoold_wrpx
+
+    ! Point the fields in the PICSAR modules to the fields provided by WarpX
+    ex => ex_wrpx
+    ey => ey_wrpx
+    ez => ez_wrpx
+    bx => bx_wrpx
+    by => by_wrpx
+    bz => bz_wrpx
+    jx => jx_wrpx
+    jy => jy_wrpx
+    jz => jz_wrpx
+    rho => rho_wrpx
+    rhoold => rhoold_wrpx
+  
+    ! Call the corresponding PICSAR function
+    CALL push_psatd_ebfield_3d()
+    
+  END SUBROUTINE
+    
+  
   ! _________________________________________________________________________
   !> @brief
   !> Routine that links the AMREX fields to the PICSAR modules,

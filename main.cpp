@@ -214,13 +214,9 @@ void toy ()
         {
             AMREX_ALWAYS_ASSERT(Ex_fft.local_size() == 1);
 
-            tps_fft_init( BL_SPACEDIM,
-                          domain_fft.loVect(), domain_fft.hiVect(),
-                          Ex_fft[mfi].loVect(), Ex_fft[mfi].hiVect(),
-                          Ex_fft[mfi].dataPtr(), Ey_fft[mfi].dataPtr(), Ez_fft[mfi].dataPtr(),
-                          Bx_fft[mfi].dataPtr(), By_fft[mfi].dataPtr(), Bz_fft[mfi].dataPtr(),
-                          jx_fft[mfi].dataPtr(), jy_fft[mfi].dataPtr(), jz_fft[mfi].dataPtr(),
-                          rho1_fft[mfi].dataPtr(), rho2_fft[mfi].dataPtr() );
+            const Box& local_domain = amrex::enclosedCells(mfi.fabbox());
+            tps_fft_init(domain_fft.loVect(), domain_fft.hiVect(),
+                         local_domain.loVect(), local_domain.hiVect());
         }
     }
 
@@ -246,11 +242,17 @@ void toy ()
         {
             for ( MFIter mfi(Ex_fft); mfi.isValid(); ++mfi ) {
                 tps_push_eb(
-		    Ex_fft[mfi].loVect(), Ex_fft[mfi].hiVect(),
-		    Ex_fft[mfi].dataPtr(), Ey_fft[mfi].dataPtr(), Ez_fft[mfi].dataPtr(),
-		    Bx_fft[mfi].dataPtr(), By_fft[mfi].dataPtr(), Bz_fft[mfi].dataPtr(),
-		    jx_fft[mfi].dataPtr(), jy_fft[mfi].dataPtr(), jz_fft[mfi].dataPtr(),
-		    rho1_fft[mfi].dataPtr(), rho2_fft[mfi].dataPtr() );
+                    BL_TO_FORTRAN_ANYD(Ex_fft[mfi]),
+                    BL_TO_FORTRAN_ANYD(Ey_fft[mfi]),
+                    BL_TO_FORTRAN_ANYD(Ez_fft[mfi]),
+                    BL_TO_FORTRAN_ANYD(Bx_fft[mfi]),
+                    BL_TO_FORTRAN_ANYD(By_fft[mfi]),
+                    BL_TO_FORTRAN_ANYD(Bz_fft[mfi]),
+                    BL_TO_FORTRAN_ANYD(jx_fft[mfi]),
+                    BL_TO_FORTRAN_ANYD(jy_fft[mfi]),
+                    BL_TO_FORTRAN_ANYD(jz_fft[mfi]),
+                    BL_TO_FORTRAN_ANYD(rho1_fft[mfi]),
+                    BL_TO_FORTRAN_ANYD(rho2_fft[mfi]));
             }
         }
 

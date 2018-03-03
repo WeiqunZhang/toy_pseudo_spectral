@@ -22,9 +22,18 @@ contains
   !> Routine that pushes the fields in spectral space
   ! __________________________________________________________________________
 
-  SUBROUTINE tps_push_eb( local_lo, local_hi, &
-       ex_wrpx, ey_wrpx, ez_wrpx, bx_wrpx, by_wrpx, bz_wrpx, &
-       jx_wrpx, jy_wrpx, jz_wrpx, rho_wrpx, rhoold_wrpx ) &
+  SUBROUTINE tps_push_eb( &
+       ex_wrpx, exlo, exhi, &
+       ey_wrpx, eylo, eyhi, &
+       ez_wrpx, ezlo, ezhi, &
+       bx_wrpx, bxlo, bxhi, &
+       by_wrpx, bylo, byhi, &
+       bz_wrpx, bzlo, bzhi, &
+       jx_wrpx, jxlo, jxhi, &
+       jy_wrpx, jylo, jyhi, &
+       jz_wrpx, jzlo, jzhi, &
+       rho_wrpx, r1lo, r1hi, &
+       rhoold_wrpx, r2lo, r2hi ) &
        BIND(C,name='tps_push_eb')       
        
     USE fields, only: ex, ey, ez, bx, by, bz, jx, jy, jz
@@ -32,14 +41,19 @@ contains
     USE constants, only: num
     implicit none
     
-    integer, intent(in) :: local_lo(BL_SPACEDIM), local_hi(BL_SPACEDIM)
-    REAL(num), INTENT(INOUT), TARGET, &
-         DIMENSION(0:local_hi(1)-local_lo(1), &
-                   0:local_hi(2)-local_lo(2), &
-                   0:local_hi(3)-local_lo(3)) :: &
-                   ex_wrpx, ey_wrpx, ez_wrpx, &
-                   bx_wrpx, by_wrpx, bz_wrpx, &
-                   jx_wrpx, jy_wrpx, jz_wrpx, rho_wrpx, rhoold_wrpx
+    integer, dimension(3), intent(in) :: exlo, exhi, eylo, eyhi, ezlo, ezhi, bxlo, bxhi, &
+         bylo, byhi, bzlo, bzhi, jxlo, jxhi, jylo, jyhi, jzlo, jzhi, r1lo, r1hi, r2lo, r2hi
+    REAL(num), INTENT(INOUT), TARGET :: ex_wrpx(exlo(1):exhi(1),exlo(2):exhi(2),exlo(3):exhi(3))
+    REAL(num), INTENT(INOUT), TARGET :: ey_wrpx(eylo(1):eyhi(1),eylo(2):eyhi(2),eylo(3):eyhi(3))
+    REAL(num), INTENT(INOUT), TARGET :: ez_wrpx(ezlo(1):ezhi(1),ezlo(2):ezhi(2),ezlo(3):ezhi(3))
+    REAL(num), INTENT(INOUT), TARGET :: bx_wrpx(bxlo(1):bxhi(1),bxlo(2):bxhi(2),bxlo(3):bxhi(3))
+    REAL(num), INTENT(INOUT), TARGET :: by_wrpx(bylo(1):byhi(1),bylo(2):byhi(2),bylo(3):byhi(3))
+    REAL(num), INTENT(INOUT), TARGET :: bz_wrpx(bzlo(1):bzhi(1),bzlo(2):bzhi(2),bzlo(3):bzhi(3))
+    REAL(num), INTENT(INOUT), TARGET :: jx_wrpx(jxlo(1):jxhi(1),jxlo(2):jxhi(2),jxlo(3):jxhi(3))
+    REAL(num), INTENT(INOUT), TARGET :: jy_wrpx(jylo(1):jyhi(1),jylo(2):jyhi(2),jylo(3):jyhi(3))
+    REAL(num), INTENT(INOUT), TARGET :: jz_wrpx(jzlo(1):jzhi(1),jzlo(2):jzhi(2),jzlo(3):jzhi(3))
+    REAL(num), INTENT(INOUT), TARGET :: rho_wrpx(r1lo(1):r1hi(1),r1lo(2):r1hi(2),r1lo(3):r1hi(3))
+    REAL(num), INTENT(INOUT), TARGET :: rhoold_wrpx(r2lo(1):r2hi(1),r2lo(2):r2hi(2),r2lo(3):r2hi(3))
 
     ! Point the fields in the PICSAR modules to the fields provided by WarpX
     ex => ex_wrpx
@@ -57,6 +71,18 @@ contains
     ! Call the corresponding PICSAR function
     CALL push_psatd_ebfield_3d()
     
+    ex => null()
+    ey => null()
+    ez => null()
+    bx => null()
+    by => null()
+    bz => null()
+    jx => null()
+    jy => null()
+    jz => null()
+    rho => null()
+    rhoold => null()
+
   END SUBROUTINE
     
   
@@ -72,9 +98,7 @@ contains
   !
   ! __________________________________________________________________________
 
-  SUBROUTINE tps_fft_init( dim, global_lo, global_hi, local_lo, local_hi, &
-       ex_wrpx, ey_wrpx, ez_wrpx, bx_wrpx, by_wrpx, bz_wrpx, &
-       jx_wrpx, jy_wrpx, jz_wrpx, rho_wrpx, rhoold_wrpx ) &
+  SUBROUTINE tps_fft_init( global_lo, global_hi, local_lo, local_hi) &
        BIND(C,name='tps_fft_init')
 
     USE shared_data, only: rank, comm, c_dim, p3dfft_flag, &
@@ -104,16 +128,7 @@ contains
 
     integer, intent(in) :: global_lo(BL_SPACEDIM), global_hi(BL_SPACEDIM)
     integer, intent(in) :: local_lo(BL_SPACEDIM), local_hi(BL_SPACEDIM)
-    integer, value, intent(in) :: dim
     integer :: nx_padded
-
-    REAL(num), INTENT(INOUT), TARGET, &
-         DIMENSION(0:local_hi(1)-local_lo(1), &
-                   0:local_hi(2)-local_lo(2), &
-                   0:local_hi(3)-local_lo(3)) :: &
-                   ex_wrpx, ey_wrpx, ez_wrpx, &
-                   bx_wrpx, by_wrpx, bz_wrpx, &
-                   jx_wrpx, jy_wrpx, jz_wrpx, rho_wrpx, rhoold_wrpx
 
 !    CALL DFFTW_INIT_THREADS(iret)
     !    fftw_threads_ok = .TRUE.
@@ -155,26 +170,15 @@ contains
     dz = 1.
     dt = 2 * dz/clight
     ! Define parameters of FFT plans
-    c_dim = INT(dim,idp)   ! Dimensionality of the simulation (2d/3d)
+    c_dim = INT(AMREX_SPACEDIM,idp)   ! Dimensionality of the simulation (2d/3d)
     fftw_with_mpi = .TRUE. ! Activate MPI FFTW
     fftw_hybrid = .FALSE.   ! FFT per MPI subgroup (instead of global)
+!???    fftw_hybrid = .TRUE.   ! FFT per MPI subgroup (instead of global)
     fftw_mpi_transpose = .FALSE. ! Do not transpose the data
     fftw_threads_ok = .FALSE.   ! Do not use threads for FFTW
     p3dfft_flag = .FALSE.
     l_spectral  = .TRUE.   ! Activate spectral Solver, using FFT
 
-    ! Point the fields in the PICSAR modules to the fields provided by WarpX
-    ex => ex_wrpx
-    ey => ey_wrpx
-    ez => ez_wrpx
-    bx => bx_wrpx
-    by => by_wrpx
-    bz => bz_wrpx
-    jx => jx_wrpx
-    jy => jy_wrpx
-    jz => jz_wrpx
-    rho => rho_wrpx
-    rhoold => rhoold_wrpx
     ! Allocate padded arrays for MPI FFTW
     nx_padded = 2*(nx/2 + 1)
     ALLOCATE(ex_r(1:nx_padded, 1:ny, 1:nz))

@@ -43,17 +43,17 @@ contains
     
     integer, dimension(3), intent(in) :: exlo, exhi, eylo, eyhi, ezlo, ezhi, bxlo, bxhi, &
          bylo, byhi, bzlo, bzhi, jxlo, jxhi, jylo, jyhi, jzlo, jzhi, r1lo, r1hi, r2lo, r2hi
-    REAL(num), INTENT(INOUT), TARGET :: ex_wrpx(exlo(1):exhi(1),exlo(2):exhi(2),exlo(3):exhi(3))
-    REAL(num), INTENT(INOUT), TARGET :: ey_wrpx(eylo(1):eyhi(1),eylo(2):eyhi(2),eylo(3):eyhi(3))
-    REAL(num), INTENT(INOUT), TARGET :: ez_wrpx(ezlo(1):ezhi(1),ezlo(2):ezhi(2),ezlo(3):ezhi(3))
-    REAL(num), INTENT(INOUT), TARGET :: bx_wrpx(bxlo(1):bxhi(1),bxlo(2):bxhi(2),bxlo(3):bxhi(3))
-    REAL(num), INTENT(INOUT), TARGET :: by_wrpx(bylo(1):byhi(1),bylo(2):byhi(2),bylo(3):byhi(3))
-    REAL(num), INTENT(INOUT), TARGET :: bz_wrpx(bzlo(1):bzhi(1),bzlo(2):bzhi(2),bzlo(3):bzhi(3))
-    REAL(num), INTENT(INOUT), TARGET :: jx_wrpx(jxlo(1):jxhi(1),jxlo(2):jxhi(2),jxlo(3):jxhi(3))
-    REAL(num), INTENT(INOUT), TARGET :: jy_wrpx(jylo(1):jyhi(1),jylo(2):jyhi(2),jylo(3):jyhi(3))
-    REAL(num), INTENT(INOUT), TARGET :: jz_wrpx(jzlo(1):jzhi(1),jzlo(2):jzhi(2),jzlo(3):jzhi(3))
-    REAL(num), INTENT(INOUT), TARGET :: rho_wrpx(r1lo(1):r1hi(1),r1lo(2):r1hi(2),r1lo(3):r1hi(3))
-    REAL(num), INTENT(INOUT), TARGET :: rhoold_wrpx(r2lo(1):r2hi(1),r2lo(2):r2hi(2),r2lo(3):r2hi(3))
+    REAL(num), INTENT(INOUT), TARGET :: ex_wrpx(0:exhi(1)-exlo(1)+1,0:exhi(2)-exlo(2)+1,0:exhi(3)-exlo(3)+1)
+    REAL(num), INTENT(INOUT), TARGET :: ey_wrpx(0:eyhi(1)-eylo(1)+1,0:eyhi(2)-eylo(2)+1,0:eyhi(3)-eylo(3)+1)
+    REAL(num), INTENT(INOUT), TARGET :: ez_wrpx(0:ezhi(1)-ezlo(1)+1,0:ezhi(2)-ezlo(2)+1,0:ezhi(3)-ezlo(3)+1)
+    REAL(num), INTENT(INOUT), TARGET :: bx_wrpx(0:bxhi(1)-bxlo(1)+1,0:bxhi(2)-bxlo(2)+1,0:bxhi(3)-bxlo(3)+1)
+    REAL(num), INTENT(INOUT), TARGET :: by_wrpx(0:byhi(1)-bylo(1)+1,0:byhi(2)-bylo(2)+1,0:byhi(3)-bylo(3)+1)
+    REAL(num), INTENT(INOUT), TARGET :: bz_wrpx(0:bzhi(1)-bzlo(1)+1,0:bzhi(2)-bzlo(2)+1,0:bzhi(3)-bzlo(3)+1)
+    REAL(num), INTENT(INOUT), TARGET :: jx_wrpx(0:jxhi(1)-jxlo(1)+1,0:jxhi(2)-jxlo(2)+1,0:jxhi(3)-jxlo(3)+1)
+    REAL(num), INTENT(INOUT), TARGET :: jy_wrpx(0:jyhi(1)-jylo(1)+1,0:jyhi(2)-jylo(2)+1,0:jyhi(3)-jylo(3)+1)
+    REAL(num), INTENT(INOUT), TARGET :: jz_wrpx(0:jzhi(1)-jzlo(1)+1,0:jzhi(2)-jzlo(2)+1,0:jzhi(3)-jzlo(3)+1)
+    REAL(num), INTENT(INOUT), TARGET :: rho_wrpx(0:r1hi(1)-r1lo(1)+1,0:r1hi(2)-r1lo(2)+1,0:r1hi(3)-r1lo(3)+1)
+    REAL(num), INTENT(INOUT), TARGET :: rhoold_wrpx(0:r2hi(1)-r2lo(1)+1,0:r2hi(2)-r2lo(2)+1,0:r2hi(3)-r2lo(3)+1)
 
     ! Point the fields in the PICSAR modules to the fields provided by WarpX
     ex => ex_wrpx
@@ -173,7 +173,6 @@ contains
     c_dim = INT(AMREX_SPACEDIM,idp)   ! Dimensionality of the simulation (2d/3d)
     fftw_with_mpi = .TRUE. ! Activate MPI FFTW
     fftw_hybrid = .FALSE.   ! FFT per MPI subgroup (instead of global)
-!???    fftw_hybrid = .TRUE.   ! FFT per MPI subgroup (instead of global)
     fftw_mpi_transpose = .FALSE. ! Do not transpose the data
     fftw_threads_ok = .FALSE.   ! Do not use threads for FFTW
     p3dfft_flag = .FALSE.

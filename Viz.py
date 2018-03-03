@@ -7,5 +7,5 @@ for i in range(10):
                            left_edge=ds.domain_left_edge,
                            dims=ds.domain_dimensions)
     Ex = ad0['Ex'].to_ndarray()
-    plt.imshow( Ex[int(len(Ex)/2)], vmin=-0.5, vmax=0.5 )
+    plt.imshow( Ex[int(len(Ex)/2)], vmin=-0.1, vmax=0.1 )
     plt.savefig('data/img%05d.png' %i)

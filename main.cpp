@@ -5,6 +5,7 @@
 #include <AMReX_PlotFileUtil.H>
 #include <AMReX_ParmParse.H>
 #include <AMReX_MultiFabUtil.H>
+#include <AMReX_LayoutData.H>
 
 #include "TPS_F.H"
 
@@ -30,6 +31,24 @@ namespace
     IntVect jx_nodal_flag(0,1,1);
     IntVect jy_nodal_flag(1,0,1);
     IntVect jz_nodal_flag(1,1,0);
+}
+
+struct FFTData
+{
+    void* data[22] = { nullptr };
+    ~FFTData () {
+        for (int i = 0; i < 22; ++i) {
+            std::free(data[i]);
+            data[i] = nullptr;
+        }
+    }
+};
+
+extern "C" {
+    void* tps_malloc (std::size_t sz)
+    {
+        return std::malloc(sz);
+    }
 }
 
 void write_plotfile (const MultiFab& Ex, const MultiFab& Ey, const MultiFab& Ez,
@@ -136,6 +155,9 @@ void toy ()
         tps_mpi_init(fcomm);
     }
 
+    static_assert(std::is_standard_layout<FFTData>::value, "FFTData must have standard layout");
+
+    LayoutData<FFTData> fft_data;
     MultiFab Ex_fft, Ey_fft, Ez_fft, Bx_fft, By_fft, Bz_fft, jx_fft, jy_fft, jz_fft, rho1_fft, rho2_fft;
     BoxArray ba_valid_fft; // This is not the one used for builing Ex_fft etc.  It doesn't contain ghost cells.
     Box domain_fft;     // the "global" domain for the subdomain FFT
@@ -206,6 +228,8 @@ void toy ()
         jz_fft.setVal(0.0);
         rho1_fft.setVal(0.0);
         rho2_fft.setVal(0.0);
+
+        fft_data.define(ba_fft, dm_fft);
     }
 
     // initialize FFTW plans
@@ -216,7 +240,8 @@ void toy ()
 
             const Box& local_domain = amrex::enclosedCells(mfi.fabbox());
             tps_fft_init(domain_fft.loVect(), domain_fft.hiVect(),
-                         local_domain.loVect(), local_domain.hiVect());
+                         local_domain.loVect(), local_domain.hiVect(),
+                         fft_data[mfi].data);
         }
     }
 
@@ -275,6 +300,10 @@ void toy ()
         }
     }
 
+    // free FFT stuff
+    {
+        tps_fft_free();
+    }
 
 
     // free MPI

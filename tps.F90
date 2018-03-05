@@ -4,6 +4,14 @@ module tps
   use, intrinsic :: iso_c_binding
   implicit none
 
+  interface
+     function tps_malloc (nbytes) result(p) bind(c)
+       import
+       type(c_ptr) :: p
+       integer(kind=c_size_t), intent(in), value :: nbytes
+     end function tps_malloc
+  end interface
+
 contains
 
   subroutine tps_mpi_init (comm_in) bind(c,name='tps_mpi_init')
@@ -98,7 +106,7 @@ contains
   !
   ! __________________________________________________________________________
 
-  SUBROUTINE tps_fft_init( global_lo, global_hi, local_lo, local_hi) &
+  SUBROUTINE tps_fft_init( global_lo, global_hi, local_lo, local_hi, fft_data) &
        BIND(C,name='tps_fft_init')
 
     USE shared_data, only: rank, comm, c_dim, p3dfft_flag, &
@@ -128,7 +136,12 @@ contains
 
     integer, intent(in) :: global_lo(BL_SPACEDIM), global_hi(BL_SPACEDIM)
     integer, intent(in) :: local_lo(BL_SPACEDIM), local_hi(BL_SPACEDIM)
+    type(c_ptr), intent(inout) :: fft_data(22)
     integer :: nx_padded
+    integer, dimension(3) :: shp
+    integer(kind=c_size_t) :: sz
+    real(c_double) :: realfoo
+    complex(c_double_complex) :: complexfoo
 
 !    CALL DFFTW_INIT_THREADS(iret)
     !    fftw_threads_ok = .TRUE.
@@ -180,17 +193,31 @@ contains
 
     ! Allocate padded arrays for MPI FFTW
     nx_padded = 2*(nx/2 + 1)
-    ALLOCATE(ex_r(1:nx_padded, 1:ny, 1:nz))
-    ALLOCATE(ey_r(1:nx_padded, 1:ny, 1:nz))
-    ALLOCATE(ez_r(1:nx_padded, 1:ny, 1:nz))
-    ALLOCATE(bx_r(1:nx_padded, 1:ny, 1:nz))
-    ALLOCATE(by_r(1:nx_padded, 1:ny, 1:nz))
-    ALLOCATE(bz_r(1:nx_padded, 1:ny, 1:nz))
-    ALLOCATE(jx_r(1:nx_padded, 1:ny, 1:nz))
-    ALLOCATE(jy_r(1:nx_padded, 1:ny, 1:nz))
-    ALLOCATE(jz_r(1:nx_padded, 1:ny, 1:nz))
-    ALLOCATE(rho_r(1:nx_padded, 1:ny, 1:nz))
-    ALLOCATE(rhoold_r(1:nx_padded, 1:ny, 1:nz))
+    shp = [nx_padded, int(ny), int(nz)] 
+    sz = c_sizeof(realfoo) * int(shp(1),c_size_t) * int(shp(2),c_size_t) * int(shp(3),c_size_t)
+    fft_data(1) = tps_malloc(sz)
+    call c_f_pointer(fft_data(1), ex_r, shp)
+    fft_data(2) = tps_malloc(sz)
+    call c_f_pointer(fft_data(2), ey_r, shp)
+    fft_data(3) = tps_malloc(sz)
+    call c_f_pointer(fft_data(3), ez_r, shp)
+    fft_data(4) = tps_malloc(sz)
+    call c_f_pointer(fft_data(4), bx_r, shp)
+    fft_data(5) = tps_malloc(sz)
+    call c_f_pointer(fft_data(5), by_r, shp)
+    fft_data(6) = tps_malloc(sz)
+    call c_f_pointer(fft_data(6), bz_r, shp)
+    fft_data(7) = tps_malloc(sz)
+    call c_f_pointer(fft_data(7), jx_r, shp)
+    fft_data(8) = tps_malloc(sz)
+    call c_f_pointer(fft_data(8), jy_r, shp)
+    fft_data(9) = tps_malloc(sz)
+    call c_f_pointer(fft_data(9), jz_r, shp)
+    fft_data(10) = tps_malloc(sz)
+    call c_f_pointer(fft_data(10), rho_r, shp)
+    fft_data(11) = tps_malloc(sz)
+    call c_f_pointer(fft_data(11), rhoold_r, shp)
+
     ! Set array bounds when copying ex to ex_r in PICSAR
     ix_min_r = 1; ix_max_r = nx
     iy_min_r = 1; iy_max_r = ny
@@ -199,22 +226,64 @@ contains
     nkx = nx/2 + 1
     nky = ny
     nkz = nz
-    ALLOCATE(exf(1:nkx, 1:nky, 1:nkz))
-    ALLOCATE(eyf(1:nkx, 1:nky, 1:nkz))
-    ALLOCATE(ezf(1:nkx, 1:nky, 1:nkz))
-    ALLOCATE(bxf(1:nkx, 1:nky, 1:nkz))
-    ALLOCATE(byf(1:nkx, 1:nky, 1:nkz))
-    ALLOCATE(bzf(1:nkx, 1:nky, 1:nkz))
-    ALLOCATE(jxf(1:nkx, 1:nky, 1:nkz))
-    ALLOCATE(jyf(1:nkx, 1:nky, 1:nkz))
-    ALLOCATE(jzf(1:nkx, 1:nky, 1:nkz))
-    ALLOCATE(rhof(1:nkx, 1:nky, 1:nkz))
-    ALLOCATE(rhooldf(1:nkx, 1:nky, 1:nkz))
+    shp = [int(nkx), int(nky), int(nkz)]
+    sz = c_sizeof(complexfoo) * int(shp(1),c_size_t) * int(shp(2),c_size_t) * int(shp(3),c_size_t)
+    fft_data(12) = tps_malloc(sz)
+    call c_f_pointer(fft_data(12), exf, shp)
+    fft_data(13) = tps_malloc(sz)
+    call c_f_pointer(fft_data(13), eyf, shp)
+    fft_data(14) = tps_malloc(sz)
+    call c_f_pointer(fft_data(14), ezf, shp)
+    fft_data(15) = tps_malloc(sz)
+    call c_f_pointer(fft_data(15), bxf, shp)
+    fft_data(16) = tps_malloc(sz)
+    call c_f_pointer(fft_data(16), byf, shp)
+    fft_data(17) = tps_malloc(sz)
+    call c_f_pointer(fft_data(17), bzf, shp)
+    fft_data(18) = tps_malloc(sz)
+    call c_f_pointer(fft_data(18), jxf, shp)
+    fft_data(19) = tps_malloc(sz)
+    call c_f_pointer(fft_data(19), jyf, shp)
+    fft_data(20) = tps_malloc(sz)
+    call c_f_pointer(fft_data(20), jzf, shp)
+    fft_data(21) = tps_malloc(sz)
+    call c_f_pointer(fft_data(21), rhof, shp)
+    fft_data(22) = tps_malloc(sz)
+    call c_f_pointer(fft_data(22), rhooldf, shp)
 
     CALL init_plans_blocks
 
   END SUBROUTINE tps_fft_init
 
+
+  subroutine tps_fft_free () bind(c, name='tps_fft_free')
+    USE fields, only: ex_r, ey_r, ez_r, bx_r, by_r, bz_r, &
+         jx_r, jy_r, jz_r, rho_r, rhoold_r, &
+         exf, eyf, ezf, bxf, byf, bzf, &
+         jxf, jyf, jzf, rhof, rhooldf
+    nullify(ex_r)
+    nullify(ey_r)
+    nullify(ez_r)
+    nullify(bx_r)
+    nullify(by_r)
+    nullify(bz_r)
+    nullify(jx_r)
+    nullify(jy_r)
+    nullify(jz_r)
+    nullify(rho_r)
+    nullify(rhoold_r)
+    nullify(exf)
+    nullify(eyf)
+    nullify(ezf)
+    nullify(bxf)
+    nullify(byf)
+    nullify(bzf)
+    nullify(jxf)
+    nullify(jyf)
+    nullify(jzf)
+    nullify(rhof)
+    nullify(rhooldf)
+  end subroutine tps_fft_free
 
   ! _________________________________________________________________________
   !> @brief
@@ -266,38 +335,5 @@ contains
     call fftw_mpi_cleanup()
     call mpi_comm_free(comm, ierr)
   end subroutine tps_mpi_finalize
-
-
-  subroutine tps_push_ebfield (cp,nvar)
-    use iso_c_binding, only : c_ptr, c_f_pointer
-    use matrix_data, only : ns_max
-    use matrix_coefficients, only : block3d, matrix_blocks, cc_mat
-    integer, intent(in) :: nvar
-    type(c_ptr), intent(in) :: cp(nvar,nvar)
-
-    type(matrix_blocks), pointer, dimension(:) :: my_cc_mat
-    integer :: nfftx, nffty, nfftz, i,j
-
-    allocate(my_cc_mat(ns_max))
-    allocate(my_cc_mat(1)%block_matrix2d(nvar,nvar))
-    my_cc_mat(1)%nblocks = nvar
-    ! nfftx, nffty, nfftz = ...
-    do j = 1, nvar
-       do i = 1, nvar
-          call c_f_pointer(cp(i,j), my_cc_mat(1)%block_matrix2d(i,j)%block3dc, &
-               shape=[nfftx/2,nffty,nfftz])
-          my_cc_mat(1)%block_matrix2d(i,j)%nx = nfftx/2+1
-          my_cc_mat(1)%block_matrix2d(i,j)%ny = nffty
-          my_cc_mat(1)%block_matrix2d(i,j)%nz = nfftz
-       end do
-    end do
-    cc_mat => my_cc_mat
-
-    ! .....
-
-    nullify(cc_mat)
-    deallocate(my_cc_mat(1)%block_matrix2d)
-    deallocate(my_cc_mat)
-  end subroutine tps_push_ebfield
 
 end module tps

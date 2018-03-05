@@ -98,7 +98,8 @@ contains
   !
   ! __________________________________________________________________________
 
-  SUBROUTINE tps_fft_init( global_lo, global_hi, local_lo, local_hi) &
+  SUBROUTINE tps_fft_init( global_lo, global_hi, local_lo, local_hi, &
+       dx_wrpx, dy_wrpx, dz_wrpx, dt_wrpx) &
        BIND(C,name='tps_fft_init')
 
     USE shared_data, only: rank, comm, c_dim, p3dfft_flag, &
@@ -128,8 +129,9 @@ contains
 
     integer, intent(in) :: global_lo(BL_SPACEDIM), global_hi(BL_SPACEDIM)
     integer, intent(in) :: local_lo(BL_SPACEDIM), local_hi(BL_SPACEDIM)
+    REAL(num), intent(in) :: dx_wrpx, dy_wrpx, dz_wrpx, dt_wrpx
     integer :: nx_padded
-
+    
 !    CALL DFFTW_INIT_THREADS(iret)
     !    fftw_threads_ok = .TRUE.
     PRINT *, rank, local_lo(1), local_lo(2), local_lo(3)
@@ -165,10 +167,10 @@ contains
     norderx = 16_idp
     nordery = 16_idp
     norderz = 16_idp
-    dx = 1.
-    dy = 1.
-    dz = 1.
-    dt = 2 * dz/clight
+    dx = dx_wrpx;
+    dy = dy_wrpx;
+    dz = dz_wrpx;
+    dt = dt_wrpx;    
     ! Define parameters of FFT plans
     c_dim = INT(AMREX_SPACEDIM,idp)   ! Dimensionality of the simulation (2d/3d)
     fftw_with_mpi = .TRUE. ! Activate MPI FFTW

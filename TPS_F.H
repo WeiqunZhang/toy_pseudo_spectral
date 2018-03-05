@@ -12,7 +12,8 @@ extern "C" {
 
   void tps_fft_init(
     const int* global_lo, const int* global_hi,
-    const int* local_lo, const int* local_hi);
+    const int* local_lo, const int* local_hi,
+    Real* dx, Real* dy, Real* dz, Real* dt );
 
   void tps_push_eb(
     amrex_real* ex, const int* exlo, const int* exhi,

@@ -61,7 +61,8 @@ void toy ()
                                                                   n_cell[2]-1)));
         RealBox real_box({AMREX_D_DECL(0.0,0.0,0.0)},
                          {AMREX_D_DECL(1.0,1.0,1.0)});
-        geom.define(domain, &real_box, 0);
+	Vector<int> is_per(AMREX_SPACEDIM, true);
+        geom.define(domain, &real_box, 0, is_per.data());
     }
 
     MultiFab Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, rho1, rho2;

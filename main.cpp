@@ -1,4 +1,3 @@
-
 #include <AMReX.H>
 #include <AMReX_Print.H>
 #include <AMReX_MultiFab.H>
@@ -30,10 +29,12 @@ namespace
     IntVect jx_nodal_flag(0,1,1);
     IntVect jy_nodal_flag(1,0,1);
     IntVect jz_nodal_flag(1,1,0);
+    IntVect rho_nodal_flag(IntVect::TheNodeVector());
 }
 
 void write_plotfile (const MultiFab& Ex, const MultiFab& Ey, const MultiFab& Ez,
                      const MultiFab& Bx, const MultiFab& By, const MultiFab& Bz,
+                     const MultiFab& jx, const MultiFab& jy, const MultiFab& jz,
                      const Geometry& geom, int istep);
 
 void copy_data_from_fft_to_valid (MultiFab& mf, const MultiFab& mf_fft,
@@ -64,6 +65,10 @@ void toy ()
 	Vector<int> is_per(AMREX_SPACEDIM, true);
         geom.define(domain, &real_box, 0, is_per.data());
     }
+    Real dx = geom.CellSize(0);
+    Real dy = geom.CellSize(1);
+    Real dz = geom.CellSize(2);
+    Real dt = 2*dz/3.e8;    
 
     MultiFab Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, rho1, rho2;
     {
@@ -80,6 +85,8 @@ void toy ()
         jx.define(amrex::convert(ba,jx_nodal_flag),dm,1,ng);
         jy.define(amrex::convert(ba,jy_nodal_flag),dm,1,ng);
         jz.define(amrex::convert(ba,jz_nodal_flag),dm,1,ng);
+        rho1.define(amrex::convert(ba,rho_nodal_flag),dm,1,ng);
+        rho2.define(amrex::convert(ba,rho_nodal_flag),dm,1,ng);
         Ex.setVal(0.0);
         Ey.setVal(0.0);
         Ez.setVal(0.0);
@@ -89,20 +96,29 @@ void toy ()
         jx.setVal(0.0);
         jy.setVal(0.0);
         jz.setVal(0.0);
+        rho1.setVal(0.0);
+        rho2.setVal(0.0);
 
         const IntVect center = (geom.Domain().smallEnd() + geom.Domain().bigEnd()) / 2;
-        for (MFIter mfi(Ex); mfi.isValid(); ++mfi)
+        for (MFIter mfi(jx); mfi.isValid(); ++mfi)
         {
-            FArrayBox& fab = Ex[mfi];
-            const Box& bx = fab.box();
+            const Box& bx_jx = jx[mfi].box();
+            const Box& bx_rho = rho2[mfi].box();
             for (int k = -1; k <= 1; ++k) {
                 for (int j = -1; j <= 1; ++j) {
                     for (int i = -1; i <= 1; ++i) {
                         IntVect iv(AMREX_D_DECL(center[0]+i,center[1]+j,center[2]+k));
-                        if (bx.contains(iv)) {
-                            fab(iv) = AMREX_D_TERM(  (1.-0.5*std::abs(i)),
+                        if (bx_jx.contains(iv)) {
+                            jx[mfi](iv) = AMREX_D_TERM(  (1.-0.5*std::abs(i)),
                                                    * (1.-0.5*std::abs(j)),
                                                    * (1.-0.5*std::abs(k)));
+                        }
+                    }
+                    for (int i=-2; i<=2; ++i) {
+                        IntVect ivp(AMREX_D_DECL(center[0]+i,center[1]+j,center[2]+k));
+                        IntVect ivm(AMREX_D_DECL(center[0]+i-1,center[1]+j,center[2]+k));
+                        if (bx_jx.contains(ivp) and bx_jx.contains(ivm) and bx_rho.contains(ivp)){
+                            rho2[mfi](ivp) = (jx[mfi](ivp) - jx[mfi](ivm))*dt/dx;
                         }
                     }
                 }
@@ -111,7 +127,7 @@ void toy ()
     }
 
     if (plot_int > 0) {
-        write_plotfile(Ex,Ey,Ez,Bx,By,Bz,geom,0);
+        write_plotfile(Ex,Ey,Ez,Bx,By,Bz,jx,jy,jz,geom,0);
     }
 
     
@@ -194,8 +210,8 @@ void toy ()
         jx_fft.define(amrex::convert(ba_fft,jx_nodal_flag), dm_fft, 1, 0);
         jy_fft.define(amrex::convert(ba_fft,jy_nodal_flag), dm_fft, 1, 0);
         jz_fft.define(amrex::convert(ba_fft,jz_nodal_flag), dm_fft, 1, 0);
-        rho1_fft.define(amrex::convert(ba_fft,IntVect::TheNodeVector()), dm_fft, 1, 0);
-        rho2_fft.define(amrex::convert(ba_fft,IntVect::TheNodeVector()), dm_fft, 1, 0);
+        rho1_fft.define(amrex::convert(ba_fft,rho_nodal_flag), dm_fft, 1, 0);
+        rho2_fft.define(amrex::convert(ba_fft,rho_nodal_flag), dm_fft, 1, 0);
         Ex_fft.setVal(0.0);
         Ey_fft.setVal(0.0);
         Ez_fft.setVal(0.0);
@@ -217,7 +233,8 @@ void toy ()
 
             const Box& local_domain = amrex::enclosedCells(mfi.fabbox());
             tps_fft_init(domain_fft.loVect(), domain_fft.hiVect(),
-                         local_domain.loVect(), local_domain.hiVect());
+                         local_domain.loVect(), local_domain.hiVect(),
+                         &dx, &dy, &dz, &dt);
         }
     }
 
@@ -237,6 +254,8 @@ void toy ()
             jx_fft.ParallelCopy(jx, 0, 0, 1, 0, 0, geom.periodicity());
             jy_fft.ParallelCopy(jy, 0, 0, 1, 0, 0, geom.periodicity());
             jz_fft.ParallelCopy(jz, 0, 0, 1, 0, 0, geom.periodicity());
+            rho1_fft.ParallelCopy(rho1, 0, 0, 1, 0, 0, geom.periodicity());
+            rho2_fft.ParallelCopy(rho2, 0, 0, 1, 0, 0, geom.periodicity());
         }
 
         // call spectral solver
@@ -266,13 +285,30 @@ void toy ()
             copy_data_from_fft_to_valid(Bx, Bx_fft, geom, ba_valid_fft);
             copy_data_from_fft_to_valid(By, By_fft, geom, ba_valid_fft);
             copy_data_from_fft_to_valid(Bz, Bz_fft, geom, ba_valid_fft);
-            copy_data_from_fft_to_valid(jx, jx_fft, geom, ba_valid_fft);
-            copy_data_from_fft_to_valid(jy, jy_fft, geom, ba_valid_fft);
-            copy_data_from_fft_to_valid(jz, jz_fft, geom, ba_valid_fft);
         }
 
         if (plot_int > 0 && (istep+1) % plot_int == 0) {
-            write_plotfile(Ex,Ey,Ez,Bx,By,Bz,geom,istep+1);
+            write_plotfile(Ex,Ey,Ez,Bx,By,Bz,jx,jy,jz,geom,istep+1);
+        }
+
+        // At the end of the first iteration: erase the current
+        // and make rho1 equal to rho2
+        if (istep==0) {
+            jx.setVal(0.0);
+            const IntVect center = (geom.Domain().smallEnd() + geom.Domain().bigEnd()) / 2;
+            for (MFIter mfi(jx); mfi.isValid(); ++mfi) {
+                const Box& bx_rho = rho2[mfi].box();
+                for (int k = -1; k <= 1; ++k) {
+                    for (int j = -1; j <= 1; ++j) {
+                        for (int i=-2; i<=2; ++i) {
+                            IntVect iv(AMREX_D_DECL(center[0]+i,center[1]+j,center[2]+k));
+                            if (bx_rho.contains(iv)){
+                                rho1[mfi](iv) = rho2[mfi](iv);
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -298,17 +334,19 @@ int main(int argc, char* argv[])
 
 void write_plotfile (const MultiFab& Ex, const MultiFab& Ey, const MultiFab& Ez,
                      const MultiFab& Bx, const MultiFab& By, const MultiFab& Bz,
+                     const MultiFab& jx, const MultiFab& jy, const MultiFab& jz,
                      const Geometry& geom, int istep)
 {
     const BoxArray& ba = amrex::convert(Ex.boxArray(), IntVect::TheZeroVector());
-    MultiFab plotmf(ba, Ex.DistributionMap(), 6, 0);
+    MultiFab plotmf(ba, Ex.DistributionMap(), 9, 0);
 
     amrex::average_edge_to_cellcenter(plotmf, 0, {&Ex, &Ey, &Ez});
     amrex::average_face_to_cellcenter(plotmf, 3, {&Bx, &By, &Bz});
-
+    amrex::average_edge_to_cellcenter(plotmf, 6, {&jx, &jy, &jz});
+    
     amrex::WriteSingleLevelPlotfile(amrex::Concatenate("./data/plt",istep),
                                     plotmf,
-                                    {"Ex", "Ey", "Ez", "Bx", "By", "Bz"},
+                                    {"Ex", "Ey", "Ez", "Bx", "By", "Bz","jx","jy","jz"},
                                     geom, 0., 0);
 }
 

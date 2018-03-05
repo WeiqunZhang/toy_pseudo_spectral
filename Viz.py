@@ -14,16 +14,17 @@ for i in range(20):
                            dims=ds.domain_dimensions)
     Ex = ad0['Ex'].to_ndarray()
     Nx, Ny, Nz = Ex.shape
-
+    vmax = 0.1
+    
     plt.figure(figsize=(10,5))
     plt.subplot(131)
-    plt.imshow( Ex[int(Nx/2),:,:], vmin=-0.01, vmax=0.01 )
+    plt.imshow( Ex[int(Nx/2),:,:], vmin=-vmax, vmax=vmax )
     plt.title('y-z plane')
     plt.subplot(132)
-    plt.imshow( Ex[:,int(Ny/2),:], vmin=-0.01, vmax=0.01 )
+    plt.imshow( Ex[:,int(Ny/2),:], vmin=-vmax, vmax=vmax )
     plt.title('x-z plane')
     plt.subplot(133)
-    plt.imshow( Ex[:,:,int(Nz/2)], vmin=-0.01, vmax=0.01 )
+    plt.imshow( Ex[:,:,int(Nz/2)], vmin=-vmax, vmax=vmax )
     plt.title('x-y plane')
     
     plt.savefig('png/img%05d.png' %i)

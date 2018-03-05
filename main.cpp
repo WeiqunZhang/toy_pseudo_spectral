@@ -11,7 +11,7 @@ using namespace amrex;
 
 namespace
 {
-    Vector<int> n_cell({32, 32, 32});
+    Vector<int> n_cell({128, 128, 128});
     int max_grid_size = 32;
     int max_step = 20;
     int plot_int = 1;

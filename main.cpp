@@ -35,6 +35,7 @@ namespace
 void write_plotfile (const MultiFab& Ex, const MultiFab& Ey, const MultiFab& Ez,
                      const MultiFab& Bx, const MultiFab& By, const MultiFab& Bz,
                      const MultiFab& jx, const MultiFab& jy, const MultiFab& jz,
+                     const MultiFab& rho1, const MultiFab& rho2,
                      const Geometry& geom, int istep);
 
 void copy_data_from_fft_to_valid (MultiFab& mf, const MultiFab& mf_fft,
@@ -118,7 +119,7 @@ void toy ()
                         IntVect ivp(AMREX_D_DECL(center[0]+i,center[1]+j,center[2]+k));
                         IntVect ivm(AMREX_D_DECL(center[0]+i-1,center[1]+j,center[2]+k));
                         if (bx_jx.contains(ivp) and bx_jx.contains(ivm) and bx_rho.contains(ivp)){
-                            rho2[mfi](ivp) = (jx[mfi](ivp) - jx[mfi](ivm))*dt/dx;
+                            rho2[mfi](ivp) = -(jx[mfi](ivp) - jx[mfi](ivm))*dt/dx;
                         }
                     }
                 }
@@ -127,7 +128,7 @@ void toy ()
     }
 
     if (plot_int > 0) {
-        write_plotfile(Ex,Ey,Ez,Bx,By,Bz,jx,jy,jz,geom,0);
+        write_plotfile(Ex,Ey,Ez,Bx,By,Bz,jx,jy,jz,rho1,rho2,geom,0);
     }
 
     
@@ -288,7 +289,7 @@ void toy ()
         }
 
         if (plot_int > 0 && (istep+1) % plot_int == 0) {
-            write_plotfile(Ex,Ey,Ez,Bx,By,Bz,jx,jy,jz,geom,istep+1);
+            write_plotfile(Ex,Ey,Ez,Bx,By,Bz,jx,jy,jz,rho1,rho2,geom,istep+1);
         }
 
         // At the end of the first iteration: erase the current
@@ -335,18 +336,21 @@ int main(int argc, char* argv[])
 void write_plotfile (const MultiFab& Ex, const MultiFab& Ey, const MultiFab& Ez,
                      const MultiFab& Bx, const MultiFab& By, const MultiFab& Bz,
                      const MultiFab& jx, const MultiFab& jy, const MultiFab& jz,
+                     const MultiFab& rho1, const MultiFab& rho2,      
                      const Geometry& geom, int istep)
 {
     const BoxArray& ba = amrex::convert(Ex.boxArray(), IntVect::TheZeroVector());
-    MultiFab plotmf(ba, Ex.DistributionMap(), 9, 0);
+    MultiFab plotmf(ba, Ex.DistributionMap(), 11, 0);
 
     amrex::average_edge_to_cellcenter(plotmf, 0, {&Ex, &Ey, &Ez});
     amrex::average_face_to_cellcenter(plotmf, 3, {&Bx, &By, &Bz});
     amrex::average_edge_to_cellcenter(plotmf, 6, {&jx, &jy, &jz});
+    amrex::average_node_to_cellcenter(plotmf, 9, rho1, 0, 1);
+    amrex::average_node_to_cellcenter(plotmf, 10, rho2, 0, 1);    
     
     amrex::WriteSingleLevelPlotfile(amrex::Concatenate("./data/plt",istep),
                                     plotmf,
-                                    {"Ex", "Ey", "Ez", "Bx", "By", "Bz","jx","jy","jz"},
+                                    {"Ex", "Ey", "Ez", "Bx", "By", "Bz","jx","jy","jz","rho1","rho2"},
                                     geom, 0., 0);
 }
 

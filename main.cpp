@@ -15,7 +15,7 @@ namespace
 {
     Vector<int> n_cell({128, 128, 128});
     int max_grid_size = 32;
-    int max_step = 10;
+    int max_step = 20;
     int plot_int = 1;
     int nguards_fft = 10;
     int ngroups_fft = 4;
@@ -80,7 +80,8 @@ void toy ()
                                                                   n_cell[2]-1)));
         RealBox real_box({AMREX_D_DECL(0.0,0.0,0.0)},
                          {AMREX_D_DECL(1.0,1.0,1.0)});
-        geom.define(domain, &real_box, 0);
+	Vector<int> is_per(AMREX_SPACEDIM, true);
+        geom.define(domain, &real_box, 0, is_per.data());
     }
 
     MultiFab Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, rho1, rho2;

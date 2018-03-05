@@ -96,10 +96,10 @@ void toy ()
             const Box& bx = fab.box();
             for (int k = -1; k <= 1; ++k) {
                 for (int j = -1; j <= 1; ++j) {
-                    for (int i = -1; i <= 1; ++i) {
-                        IntVect iv(AMREX_D_DECL(center[0]+i,center[1]+j,center[2]+k));
+		  for (int i = bx.smallEnd(0); i <= bx.bigEnd(0); ++i) {
+                        IntVect iv(AMREX_D_DECL(i,center[1]+j,center[2]+k));
                         if (bx.contains(iv)) {
-                            fab(iv) = AMREX_D_TERM(  (1.-0.5*std::abs(i)),
+                            fab(iv) = AMREX_D_TERM( 1.,
                                                    * (1.-0.5*std::abs(j)),
                                                    * (1.-0.5*std::abs(k)));
                         }
@@ -107,7 +107,7 @@ void toy ()
                 }
             }
         }
-    }
+   }
 
     if (plot_int > 0) {
         write_plotfile(Ex,Ey,Ez,Bx,By,Bz,geom,0);

@@ -36,9 +36,9 @@ for i in range(20):
                            dims=ds.domain_dimensions)
     nlines = 4
     plt.figure(figsize=(10,nlines*4))
-    plot_field('Ex', 0, nlines, ad0, vmax=0.1)
-    plot_field('Ey', 1, nlines, ad0, vmax=0.4)
-    plot_field('Ez', 2, nlines, ad0, vmax=0.4)
+    plot_field('Ex', 0, nlines, ad0, vmax=0.03)
+    plot_field('Ey', 1, nlines, ad0, vmax=0.03)
+    plot_field('Ez', 2, nlines, ad0, vmax=0.03)
     plot_field('rho1', 3, nlines, ad0, vmax=None)
 #    plot_field('rho2', 4, nlines, ad0, vmax=None)
     plt.savefig('png/img%05d.png' %i)

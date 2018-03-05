@@ -164,9 +164,9 @@ contains
     
     ! For the calculation of the modified [k] vectors
     l_staggered = .TRUE.
-    norderx = 16_idp
-    nordery = 16_idp
-    norderz = 16_idp
+    norderx = 2_idp
+    nordery = 2_idp
+    norderz = 2_idp
     dx = dx_wrpx;
     dy = dy_wrpx;
     dz = dz_wrpx;

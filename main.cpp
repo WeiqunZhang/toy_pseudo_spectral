@@ -14,7 +14,7 @@ namespace
 {
     Vector<int> n_cell({128, 128, 128});
     int max_grid_size = 32;
-    int max_step = 10;
+    int max_step = 20;
     int plot_int = 1;
     int nguards_fft = 10;
     int ngroups_fft = 4;

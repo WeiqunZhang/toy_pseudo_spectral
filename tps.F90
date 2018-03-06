@@ -98,15 +98,10 @@ contains
   !> @brief
   !> Routine that links the AMREX fields to the PICSAR modules,
   !> creates the FFT plans, and creates the blocks of coefficients
-  !
-  !> @params[in] nx, ny, nz - INTEGER - number of cells along each direction
-  !> in the FFT subgroup
-  !> @params[in] dim - INTEGER - dimensionality of the simulation
-  !> (2 for 2d, 3 for 3d)
-  !
   ! __________________________________________________________________________
 
-  SUBROUTINE tps_fft_init( global_lo, global_hi, local_lo, local_hi, fft_data) &
+  SUBROUTINE tps_fft_init( global_lo, global_hi, local_lo, local_hi, &
+       dx_wrpx, dy_wrpx, dz_wrpx, dt_wrpx, fft_data) &
        BIND(C,name='tps_fft_init')
 
     USE shared_data, only: rank, comm, c_dim, p3dfft_flag, &
@@ -136,7 +131,9 @@ contains
 
     integer, intent(in) :: global_lo(BL_SPACEDIM), global_hi(BL_SPACEDIM)
     integer, intent(in) :: local_lo(BL_SPACEDIM), local_hi(BL_SPACEDIM)
+    REAL(num), intent(in) :: dx_wrpx, dy_wrpx, dz_wrpx, dt_wrpx
     type(c_ptr), intent(inout) :: fft_data(22)
+
     integer :: nx_padded
     integer, dimension(3) :: shp
     integer(kind=c_size_t) :: sz
@@ -178,10 +175,10 @@ contains
     norderx = 16_idp
     nordery = 16_idp
     norderz = 16_idp
-    dx = 1.
-    dy = 1.
-    dz = 1.
-    dt = 2 * dz/clight
+    dx = dx_wrpx;
+    dy = dy_wrpx;
+    dz = dz_wrpx;
+    dt = dt_wrpx;    
     ! Define parameters of FFT plans
     c_dim = INT(AMREX_SPACEDIM,idp)   ! Dimensionality of the simulation (2d/3d)
     fftw_with_mpi = .TRUE. ! Activate MPI FFTW
